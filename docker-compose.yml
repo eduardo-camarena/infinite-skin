@@ -1,0 +1,36 @@
+version: '3'
+services:
+  database:
+      container_name: mariadb
+      image: mariadb:10.9.5
+      volumes:
+        - dbdata:/var/lib/mysql
+      networks:
+        - infinite-skin
+      environment:
+        - "MYSQL_DATABASE=infinite_skin"
+        - "MYSQL_USER=infinite_skin"
+        - "MYSQL_PASSWORD=infinite_skin"
+        - "MYSQL_ROOT_PASSWORD=secret"
+      ports:
+        - 3306:3306
+
+  # backend:
+  #   image: infinite_skin-backend
+  #   container_name: infinite_skin-backend
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #   env_file: ./backend/.docker-env
+  #   ports:
+  #     - '3005:8080'
+  #   networks:
+  #     - infinite-skin
+  #   volumes:
+  #     - ./backend/src:/app/src
+
+volumes:
+  dbdata:
+
+networks:
+  infinite-skin:
