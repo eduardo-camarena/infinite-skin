@@ -1,10 +1,10 @@
 version: '3'
 services:
-  database:
-      container_name: mariadb
+  is_database:
+      container_name: is_mariadb
       image: mariadb:10.9.5
       volumes:
-        - dbdata:/var/lib/mysql
+        - is_dbdata:/var/lib/mysql
       networks:
         - infinite-skin
       environment:
@@ -15,9 +15,26 @@ services:
       ports:
         - 3306:3306
 
-  # backend:
-  #   image: infinite_skin-backend
-  #   container_name: infinite_skin-backend
+  is_frontend:
+    image: is_frontend
+    container_name: is_frontend
+    build:
+      context: ./frontend
+      args:
+        ENVIRONMENT: development
+        NODE_ENV: development
+    command: yarn start
+    env_file: ./frontend/.env
+    ports:
+      - '8080:3000'
+    networks:
+      - infinite-skin
+    volumes:
+      - ./frontend/src:/app/src
+
+  # is_backend:
+  #   image: is_backend
+  #   container_name: is_backend
   #   build:
   #     context: ./backend
   #     dockerfile: Dockerfile
@@ -30,7 +47,7 @@ services:
   #     - ./backend/src:/app/src
 
 volumes:
-  dbdata:
+  is_dbdata:
 
 networks:
   infinite-skin:
