@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct User {
+pub struct Admin {
     pub id: i32,
-    pub username: String,
+    pub name: String,
     pub email: String,
     pub password: String,
 }
