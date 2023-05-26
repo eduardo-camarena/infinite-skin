@@ -1,4 +1,4 @@
-import { Outlet, useNavigate, useParams } from '@solidjs/router';
+import { useNavigate, useParams } from '@solidjs/router';
 import {
   Component,
   createEffect,
@@ -8,18 +8,17 @@ import {
   onCleanup,
 } from 'solid-js';
 
+import { albumStore, setAlbumStore } from './[albumId]';
 import Loading from '../../components/Loading';
 
 type ViewType = 'singleImage' | 'allImages';
-
-import { albumStore, setAlbumStore } from './[albumId]';
 
 const fetchImage = async (id: string): Promise<string> => {
   console.log(id);
   const image = albumStore.images.find((image) => image.id === id);
   if (image === undefined) {
     const bytes = await fetch(
-      `http://localhost:8000/images/aqua/ganyu (${id}).jpg`
+      `http://localhost:8001/albums/aqua/ganyu (1).jpg`
     ).then(async (res) => new Blob([await res.arrayBuffer()]));
 
     const image = URL.createObjectURL(bytes);
@@ -43,10 +42,7 @@ const AlbumViewer: Component = () => {
 
   const [next, setNext] = createSignal(+params.albumId);
 
-  const [image, { refetch, mutate }] = createResource(
-    params.imageId,
-    fetchImage
-  );
+  const [image, { mutate }] = createResource(params.imageId, fetchImage);
 
   const navigate = useNavigate();
   createEffect(() => {
