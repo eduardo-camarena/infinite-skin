@@ -11,14 +11,19 @@ import {
 import { albumStore, setAlbumStore } from './[albumId]';
 import Loading from '../../components/Loading';
 
+type AlbumViewerParams = {
+  albumId: string;
+  imageId: string;
+};
+
 type ViewType = 'singleImage' | 'allImages';
 
-const fetchImage = async (id: string): Promise<string> => {
-  console.log(id);
-  const image = albumStore.images.find((image) => image.id === id);
+const fetchImage = async (payload: AlbumViewerParams): Promise<string> => {
+  const { albumId, imageId } = payload;
+  const image = albumStore.images.find((image) => image.id === imageId);
   if (image === undefined) {
     const bytes = await fetch(
-      `http://localhost:8001/albums/aqua/ganyu (1).jpg`
+      `http://localhost:8001/albums/${albumId}/${imageId}`
     ).then(async (res) => new Blob([await res.arrayBuffer()]));
 
     const image = URL.createObjectURL(bytes);
@@ -26,7 +31,7 @@ const fetchImage = async (id: string): Promise<string> => {
     setAlbumStore('images', (images) => [
       ...images,
       {
-        id: id,
+        id: imageId,
         data: image.toString(),
       },
     ]);
@@ -37,23 +42,21 @@ const fetchImage = async (id: string): Promise<string> => {
 };
 
 const AlbumViewer: Component = () => {
-  const params = useParams<{ albumId: string; imageId: string }>();
+  const params = useParams<AlbumViewerParams>();
   const [viewType, setViewType] = createSignal<ViewType>('singleImage');
 
-  const [next, setNext] = createSignal(+params.albumId);
-
-  const [image, { mutate }] = createResource(params.imageId, fetchImage);
+  const [image, { mutate }] = createResource(() => ({ ...params }), fetchImage);
 
   const navigate = useNavigate();
   createEffect(() => {
     window.addEventListener('keydown', async (event) => {
       if (viewType() === 'singleImage') {
-        if (event.key === 'ArrowLeft') {
-          navigate(`/images/${params.albumId}/${+params.imageId - 1}`);
-          mutate(await fetchImage((+params.imageId - 1).toString()));
+        if (event.key === 'ArrowLeft' && +params.imageId > 1) {
+          navigate(`/a/${params.albumId}/p/${+params.imageId - 1}`);
+          mutate(await fetchImage({ ...params }));
         } else if (event.key === 'ArrowRight') {
-          navigate(`/images/${params.albumId}/${+params.imageId + 1}`);
-          mutate(await fetchImage((+params.imageId - 1).toString()));
+          navigate(`/a/${params.albumId}/p/${+params.imageId + 1}`);
+          mutate(await fetchImage({ ...params }));
         }
       }
     });
@@ -64,7 +67,7 @@ const AlbumViewer: Component = () => {
   });
 
   return (
-    <div class="flex flex-col justify-center px-60">
+    <div class="flex flex-col justify-center mx-[10%]">
       {viewType() === 'singleImage' ? (
         <img src={image()!} class="w-min h-auto" alt="logo" />
       ) : (

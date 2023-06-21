@@ -1,27 +1,18 @@
-import { HiOutlineBeaker } from 'solid-icons/hi';
+import { A } from '@solidjs/router';
 import { Component } from 'solid-js';
-
-import Button from '../../InputComponents/Button';
 
 const WelcomeScreen: Component = () => {
   return (
-    <div class="flex flex-col content-center w-full pt-40">
-      <HiOutlineBeaker class="w-10 h-10 !text-red-600 m-auto" />
-      <div>
-        <Button
-          text="Scan"
-          variant="blue"
-          rounded="full"
-          onClick={async () => {
-            console.log('hello');
-            (
-              await fetch('http://localhost:8001/albums/scan', {
-                method: 'POST',
-              })
-            ).status;
-          }}
-        />
-      </div>
+    <div class="flex flex-col content-center items-center h-full">
+      <A class="w-full flex-1 flex border-b" href="/">
+        <p class="self-center m-auto">TV shows</p>
+      </A>
+      <A class="w-full flex-1 flex border-b" href="/">
+        <p class="self-center m-auto">Movies</p>
+      </A>
+      <A class="w-full flex-1 flex" href="/a">
+        <p class="self-center m-auto">Albums</p>
+      </A>
     </div>
   );
 };
