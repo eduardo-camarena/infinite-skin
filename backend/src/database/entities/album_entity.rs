@@ -5,6 +5,7 @@ use sqlx::FromRow;
 pub struct Album {
     pub id: i32,
     pub name: String,
+    pub full_name: String,
     pub pages: i16,
     pub artist_id: Option<i32>,
 }

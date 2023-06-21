@@ -42,6 +42,7 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/albums")
                     .service(albums::get_file)
+                    .service(albums::get_albums)
                     .service(albums::get_album_info)
                     .service(albums::scan_media_folder),
             )

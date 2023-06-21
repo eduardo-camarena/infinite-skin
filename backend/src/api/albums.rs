@@ -5,7 +5,6 @@ use actix_web::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{self, FromRow, MySql};
-use std::env;
 use walkdir::{DirEntry, WalkDir};
 
 use crate::database::entities::{
@@ -17,38 +16,52 @@ use super::errors::server_error::ServerError;
 use super::errors::user_error::UserError;
 
 #[derive(Serialize, Deserialize)]
-pub struct ImageExistsResponse {
-    it_works: bool,
+struct GetAlbumsResponse {
+    id: i32,
+    name: String,
 }
 
-#[get("/{album_id}/{filename}")]
+#[get("/")]
+pub async fn get_albums(app_data: Data<AppData>) -> impl Responder {
+    let conn = &app_data.pool;
+    let albums = sqlx::query_as!(GetAlbumsResponse, "SELECT id, name FROM album LIMIT 20")
+        .fetch_all(conn)
+        .await;
+
+    return match albums {
+        Err(_) => Err(UserError::NotFound),
+        Ok(albums) => Ok(Json(albums)),
+    };
+}
+
+#[get("/{album_id}/{image_id}")]
 pub async fn get_file(
     req: HttpRequest,
-    path: Path<(i32, String)>,
+    path: Path<(i32, i32)>,
     app_data: Data<AppData>,
 ) -> impl Responder {
     let pool = &app_data.pool;
-    let (album_id, filename) = path.into_inner();
+    let (album_id, image_id) = path.into_inner();
 
-    let album_name = sqlx::query_as::<_, (String,)>("SELECT name FROM album WHERE id=?")
-        .bind(album_id)
-        .fetch_one(pool)
-        .await;
+    let album =
+        sqlx::query_as::<_, (String, String)>("SELECT name, full_name FROM album WHERE id=?")
+            .bind(album_id)
+            .fetch_one(pool)
+            .await;
 
-    if album_name.is_err() {
+    if album.is_err() {
         return Err(UserError::ValidationError {
             field: String::from("album_id"),
         });
     }
 
-    let image_media_folder = format!(
-        "{}/{}/{}",
-        app_data.config.image_media_folder,
-        album_name.unwrap().0,
-        filename
+    let (name, full_name) = album.unwrap();
+    let file_location = format!(
+        "{}/{}/{} ({}).jpg",
+        app_data.config.image_media_folder, full_name, name, image_id
     );
 
-    let file_path = std::path::PathBuf::from(image_media_folder);
+    let file_path = std::path::PathBuf::from(file_location);
     let file = actix_files::NamedFile::open_async(file_path).await;
 
     return match file {
@@ -58,15 +71,18 @@ pub async fn get_file(
 }
 
 #[get("/{album_id}")]
-pub async fn get_album_info(app_data: Data<AppData>, _path: Path<i32>) -> impl Responder {
-    let _conn = &app_data.pool;
+pub async fn get_album_info(app_data: Data<AppData>, path: Path<i32>) -> impl Responder {
+    let conn = &app_data.pool;
 
-    let album: Result<Album, UserError> = Ok(Album {
-        id: 1,
-        name: String::from("hello"),
-        pages: 10,
-        artist_id: None,
-    });
+    let album_id = path.into_inner();
+
+    let album = sqlx::query_as!(
+        Album,
+        "SELECT id, name, full_name, pages, artist_id FROM album WHERE id=?",
+        album_id
+    )
+    .fetch_one(conn)
+    .await;
 
     return match album {
         Err(_) => Err(UserError::NotFound),
@@ -81,7 +97,7 @@ struct AlbumName {
 
 #[post("/scan")]
 pub async fn scan_media_folder(app_data: Data<AppData>) -> impl Responder {
-    let media_folder = env::var("IMAGE_MEDIA_FOLDER").expect("Media folder not ");
+    let media_folder = &app_data.config.image_media_folder;
     let pool = &app_data.pool;
 
     let folder_names = WalkDir::new(&media_folder)
@@ -90,7 +106,7 @@ pub async fn scan_media_folder(app_data: Data<AppData>) -> impl Responder {
         .filter(|file| file.is_some())
         .map(|file| file.unwrap())
         .filter(|file| file.metadata().unwrap().is_dir())
-        .filter(|folder| folder.path().to_string_lossy() != media_folder)
+        .filter(|folder| folder.path().to_str().unwrap() != media_folder)
         .map(|folder| String::from(folder.file_name().to_str().unwrap()))
         .collect::<Vec<String>>();
 
@@ -179,9 +195,10 @@ pub async fn scan_media_folder(app_data: Data<AppData>) -> impl Responder {
         }
 
         let persisted_album_id = sqlx::query_as::<_, (i32,)>(
-            "INSERT INTO album(name, pages, artist_id) VALUES(?, ?, ?) RETURNING id",
+            "INSERT INTO album(name, full_name, pages, artist_id) VALUES(?, ?, ?, ?) RETURNING id",
         )
         .bind(album.name)
+        .bind(album.full_name)
         .bind(pages as i32)
         .bind(artist_id)
         .fetch_one(pool)
