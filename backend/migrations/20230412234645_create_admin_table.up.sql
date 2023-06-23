@@ -1,9 +1,0 @@
--- Add up migration script here
-CREATE TABLE admin(
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  name TINYTEXT NOT NULL,
-  email TINYTEXT NOT NULL,
-  password TEXT NOT NULL
-);
-
-ALTER TABLE admin AUTO_INCREMENT=1000000;
