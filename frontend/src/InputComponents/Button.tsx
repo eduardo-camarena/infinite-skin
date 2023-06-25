@@ -3,18 +3,18 @@ import type { Component, JSX } from 'solid-js';
 import { classNames } from '../utils/classNames';
 
 type ButtonProps = JSX.ButtonHTMLAttributes<HTMLButtonElement> & {
-  text: string;
+  text: string | JSX.Element;
   padding?: string;
   disabled?: boolean;
-  variant: 'blue' | 'gray';
-  rounded: 'left' | 'right' | 'top' | 'bottom' | 'full' | 'none';
+  variant: 'blue' | 'red' | 'gray';
+  rounded?: 'left' | 'right' | 'top' | 'bottom' | 'full' | 'none';
 };
 
 const Button: Component<ButtonProps> = ({
   text,
   variant,
-  rounded,
   disabled,
+  rounded = 'full',
   padding = 'px-6 py-2',
   ...extraProps
 }) => {
@@ -39,6 +39,8 @@ const Button: Component<ButtonProps> = ({
     switch (variant) {
       case 'blue':
         return 'shadow-sm text-white bg-indigo-600 hover:bg-indigo-700';
+      case 'red':
+        return 'shadow-sm text-white bg-red-600 hover:bg-red-500';
       case 'gray':
         return 'shadow-sm text-gray-700 bg-gray-200';
     }
