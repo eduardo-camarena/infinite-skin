@@ -1,6 +1,6 @@
 import { createStore } from 'solid-js/store';
 
-type Album = {
+export type Album = {
   id: number;
   name: string;
   full_name: string;
@@ -25,6 +25,8 @@ export const getAlbum = async (albumId: string): Promise<void> => {
     (res) => res.json()
   );
 
+  console.log(album);
+
   setAlbumStore('album', album);
 };
 
@@ -36,7 +38,7 @@ export const fetchImage = async (payload: {
   const image = albumStore.images.find((image) => image.id === imageId);
   if (image === undefined) {
     const bytes = await fetch(
-      `http://localhost:8001/albums/${albumId}/${imageId}`
+      `http://localhost:8001/albums/${albumId}/images/${imageId}`
     ).then(async (res) => new Blob([await res.arrayBuffer()]));
 
     const image = URL.createObjectURL(bytes);

@@ -41,6 +41,7 @@ async fn main() -> std::io::Result<()> {
             .service(web::scope("/users").service(users::get_user))
             .service(
                 web::scope("/albums")
+                    .service(albums::last_page_number)
                     .service(albums::get_file)
                     .service(albums::get_albums)
                     .service(albums::get_album_info)
