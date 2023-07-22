@@ -88,15 +88,32 @@ pub async fn get_file(
         app_data.config.image_media_folder, full_name, name, image_id
     );
 
-    println!("{}", file_location);
+    let mut file_path = std::path::PathBuf::from(file_location);
+    let mut file = actix_files::NamedFile::open_async(&file_path).await;
 
-    let file_path = std::path::PathBuf::from(file_location);
-    let file = actix_files::NamedFile::open_async(file_path).await;
+    // TODO: find a better way to match different extensions that isn't a loop
+    if file.is_ok() {
+        println!("{}", file_path.to_string_lossy());
+        return Ok(file.unwrap().into_response(&req));
+    }
 
-    return match file {
-        Err(_) => Err(UserError::NotFound),
-        Ok(file) => Ok(file.into_response(&req)),
-    };
+    file_path.set_extension("jpeg");
+    file = actix_files::NamedFile::open_async(&file_path).await;
+
+    if file.is_ok() {
+        println!("{}", file_path.to_string_lossy());
+        return Ok(file.unwrap().into_response(&req));
+    }
+
+    file_path.set_extension("png");
+    file = actix_files::NamedFile::open_async(&file_path).await;
+
+    if file.is_ok() {
+        println!("{}", file_path.to_string_lossy());
+        return Ok(file.unwrap().into_response(&req));
+    }
+
+    return Err(UserError::NotFound);
 }
 
 #[get("/{album_id}")]

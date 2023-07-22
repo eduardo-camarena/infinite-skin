@@ -26,13 +26,20 @@ const Albums: Component = () => {
   );
 
   return (
-    <div class="pt-8 px-6 sm:m-auto sm:w-[600px] lg:w-[1100px]">
+    <div class="pt-8 px-4 sm:m-auto sm:w-[600px] lg:w-[1100px]">
       <div class="flex flex-wrap gap-2">
         <For each={albumsStore}>
           {(album) => (
-            <Link href={`/a/${album.id}`} class="w-[200px] m-auto">
-              <p>{album.id}</p>
-              <p>{album.name}</p>
+            <Link href={`/a/${album.id}`} class="w-[200px] m-auto relative">
+              <img
+                src={`http://localhost:8001/albums/${album.id}/images/1`}
+                loading="lazy"
+                class="w-min"
+              />
+              <div class="absolute bottom-0 w-full text-center bg-stone-900/40">
+                <p>{album.id}</p>
+                <p>{album.name}</p>
+              </div>
             </Link>
           )}
         </For>

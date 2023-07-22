@@ -42,10 +42,10 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/albums")
                     .service(albums::last_page_number)
+                    .service(albums::scan_media_folder)
                     .service(albums::get_file)
                     .service(albums::get_albums)
-                    .service(albums::get_album_info)
-                    .service(albums::scan_media_folder),
+                    .service(albums::get_album_info),
             )
     })
     .bind(("localhost", 8001))?
