@@ -6,7 +6,8 @@
     "start": "DISABLE_ESLINT_PLUGIN=true vite --host --port=3000",
     "dev": "vite",
     "build": "vite build",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "format": "prettier --write src"
   },
   "license": "MIT",
   "devDependencies": {
@@ -14,9 +15,7 @@
     "@typescript-eslint/parser": "^5.53.0",
     "autoprefixer": "^10.4.14",
     "eslint": "^8.34.0",
-    "eslint-config-prettier": "^8.6.0",
     "eslint-plugin-import": "^2.27.5",
-    "eslint-plugin-prettier": "^4.2.1",
     "postcss": "^8.4.24",
     "prettier": "^2.8.4",
     "tailwindcss": "^3.3.2",
