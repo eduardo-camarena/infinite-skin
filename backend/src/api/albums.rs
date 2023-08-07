@@ -84,8 +84,8 @@ pub async fn get_file(
 
     let (name, full_name) = album.unwrap();
     let file_location = format!(
-        "{}/{}/{} ({}).jpg",
-        app_data.config.image_media_folder, full_name, name, image_id
+        "{}/images/{}/{} ({}).jpg",
+        app_data.config.media_folder, full_name, name, image_id
     );
 
     let mut file_path = std::path::PathBuf::from(file_location);
@@ -146,7 +146,7 @@ struct AlbumName {
 
 #[post("/scan")]
 pub async fn scan_media_folder(app_data: Data<AppData>) -> impl Responder {
-    let media_folder = &app_data.config.image_media_folder;
+    let media_folder = format!("{}/images", &app_data.config.media_folder);
     let pool = &app_data.pool;
 
     let folder_names = WalkDir::new(&media_folder)
@@ -160,17 +160,13 @@ pub async fn scan_media_folder(app_data: Data<AppData>) -> impl Responder {
         .collect::<Vec<String>>();
 
     let albums = get_albums_with_metadata(folder_names).await;
-    let album_names = albums
-        .iter()
-        .map(|album| String::from(&album.name))
-        .collect::<Vec<String>>();
 
     let mut query_builder: sqlx::QueryBuilder<MySql> =
         sqlx::QueryBuilder::new("WITH t(a) AS (VALUES(");
 
     let mut separated = query_builder.separated("), (");
-    for album in album_names.iter() {
-        separated.push_bind(album);
+    for album in albums.iter() {
+        separated.push_bind(&album.name);
     }
 
     separated.push_unseparated(")) SELECT t.a FROM t WHERE t.a NOT IN(SELECT name FROM album)");
