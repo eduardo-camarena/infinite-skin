@@ -7,9 +7,7 @@ const Menu: ParentComponent = ({ children }) => {
       <div class="dark:bg-neutral-900 bg-indigo-600 px-4 py-2">
         <A href="/">infinite-skin</A>
       </div>
-      <main class="flex-1">
-        {children}
-      </main>
+      <main class="flex-1">{children}</main>
     </div>
   );
 };

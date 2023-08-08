@@ -29,7 +29,7 @@ const Button: Component<ButtonProps> = ({
       case 'bottom':
         return 'rounded-b-md';
       case 'full':
-        return 'rounded-md';
+        return 'rounded-full';
       case 'none':
         return '';
     }
