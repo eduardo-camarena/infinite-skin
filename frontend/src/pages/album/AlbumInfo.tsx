@@ -17,11 +17,14 @@ const AlbumInfo: Component = () => {
       fallback={<Loading margin="ml-[calc(50%-1rem)] mt-[calc(50%-1rem)]" />}
     >
       {albumStore.album && albumStore.images.length && (
-        <div class="pt-10 px-[15%]">
-          <div class="flex flex-row py-12 px-20 bg-neutral-900">
-            <div class="px-8">
-              <Link href={`/a/${albumId}/p/1`}>
-                <img src={albumStore.images[0].data} class="w-min h-[488px]" />
+        <div class="pt-6 md:pt-10 px-4 md:px-[15%]">
+          <div class="flex flex-col lg:flex-row py-8 md:px-12 lg:px-20 bg-neutral-900">
+            <div class="px-8 pb-4 md:pb-0 md:w-[45%] lg:h-[488px] lg:relative">
+              <Link
+                class="flex flex-col justify-center h-full"
+                href={`/a/${albumId}/p/1`}
+              >
+                <img src={albumStore.images[0].data} class="h-[400px] w-min" />
               </Link>
             </div>
             <div class="flex-1 flex flex-col mx-8">

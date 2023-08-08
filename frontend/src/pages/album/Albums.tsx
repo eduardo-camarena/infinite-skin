@@ -2,6 +2,7 @@ import { Link, useSearchParams } from '@solidjs/router';
 import { Component, createResource, For } from 'solid-js';
 
 import Button from '../../InputComponents/Button';
+import { setAlbumStore } from '../../stores/album';
 import { albumsStore, getAlbums } from '../../stores/albums';
 
 type AlbumsPageSearchParams = {
@@ -27,15 +28,22 @@ const Albums: Component = () => {
 
   return (
     <div class="pt-8 px-4 sm:m-auto sm:w-[600px] lg:w-[1100px]">
-      <div class="flex flex-wrap gap-2">
+      <div class="flex flex-wrap gap-x-2 gap-y-4">
         <For each={albumsStore}>
           {(album) => (
-            <Link href={`/a/${album.id}`} class="w-[200px] m-auto relative">
-              <img
-                src={`http://localhost:8001/albums/${album.id}/images/1`}
-                loading="lazy"
-                class="w-min"
-              />
+            <Link
+              href={`/a/${album.id}`}
+              class="w-[200px] h-[300px] m-auto relative"
+              onClick={() => setAlbumStore('images', [])}
+            >
+              <div class="flex flex-col justify-center h-full">
+                <img
+                  src={`http://localhost:8001/albums/${album.id}/images/1`}
+                  loading="lazy"
+                  class="w-min"
+                  alt={album.name}
+                />
+              </div>
               <div class="absolute bottom-0 w-full text-center bg-stone-900/40">
                 <p>{album.id}</p>
                 <p>{album.name}</p>
