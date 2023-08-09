@@ -16,7 +16,11 @@ import Loading from '../../components/Loading';
 import { albumStore, fetchImage, getAlbum } from '../../stores/album';
 import { albumsStore } from '../../stores/albums';
 import Button from '../../InputComponents/Button';
-import AlbumViewerControls, { ViewType } from '../../components/AlbumViewerControls';
+import AlbumViewerControls, {
+  ViewType,
+} from '../../components/AlbumViewerControls';
+
+const { VITE_HOST: HOST } = import.meta.env;
 
 type AlbumViewerParams = {
   albumId: string;
@@ -83,11 +87,14 @@ const AlbumViewer: Component = () => {
               </Show>
             </Match>
             <Match when={viewType() === 'allImages'}>
-              <For each={albumStore.images}>
-                {(image) => (
-                  <Show when={image.data}>
-                    <img src={image.data} class="w-min h-auto" alt="logo" />
-                  </Show>
+              <For each={Array.from(Array(albumStore.album!.pages).keys())}>
+                {(idx) => (
+                  <img
+                    src={`${HOST}/albums/${params.albumId}/images/${idx + 1}`}
+                    loading="lazy"
+                    class="w-min h-auto"
+                    alt="logo"
+                  />
                 )}
               </For>
             </Match>

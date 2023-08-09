@@ -1,5 +1,7 @@
 import { createStore } from 'solid-js/store';
 
+const { VITE_HOST: HOST } = import.meta.env;
+
 export type Album = {
   id: number;
   name: string;
@@ -21,11 +23,9 @@ export const [albumStore, setAlbumStore] = createStore<AlbumStore>({
 });
 
 export const getAlbum = async (albumId: string): Promise<void> => {
-  const album = await fetch(`http://localhost:8001/albums/${albumId}`).then(
-    (res) => res.json()
+  const album = await fetch(`${HOST}/albums/${albumId}`).then((res) =>
+    res.json()
   );
-
-  console.log(album);
 
   setAlbumStore('album', album);
 };
@@ -38,7 +38,7 @@ export const fetchImage = async (payload: {
   const image = albumStore.images.find((image) => image.id === imageId);
   if (image === undefined) {
     const bytes = await fetch(
-      `http://localhost:8001/albums/${albumId}/images/${imageId}`
+      `${HOST}/albums/${albumId}/images/${imageId}`
     ).then(async (res) => new Blob([await res.arrayBuffer()]));
 
     const image = URL.createObjectURL(bytes);

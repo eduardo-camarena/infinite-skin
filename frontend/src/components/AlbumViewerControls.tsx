@@ -9,13 +9,16 @@ type AlbumViewerControlsProps = {
   albumId: string;
   lastPage: number;
   currentPage: number;
-} & ({
-  viewType?: undefined;
-  setViewType?: undefined;
-} | {
-  viewType: Accessor<ViewType>;
-  setViewType: Setter<ViewType>;
-});
+} & (
+  | {
+      viewType?: undefined;
+      setViewType?: undefined;
+    }
+  | {
+      viewType: Accessor<ViewType>;
+      setViewType: Setter<ViewType>;
+    }
+);
 
 const AlbumViewerControls: Component<AlbumViewerControlsProps> = ({
   albumId,
@@ -35,11 +38,11 @@ const AlbumViewerControls: Component<AlbumViewerControlsProps> = ({
       <div class="flex absolute right-4 gap-4">
         {viewType && (
           <Button
-            text={(
-              <Show when={viewType() === 'singleImage'} fallback="All images">
-                Single image
+            text={
+              <Show when={viewType() === 'singleImage'} fallback="Single image">
+                All images
               </Show>
-            )}
+            }
             variant="blue"
             rounded="full"
             padding="px-4 py-1"
@@ -52,9 +55,12 @@ const AlbumViewerControls: Component<AlbumViewerControlsProps> = ({
             }}
           />
         )}
-        <button class="my-auto z-10" onClick={() => {
-          console.log('hello');
-        }}>
+        <button
+          class="my-auto z-10"
+          onClick={() => {
+            console.log('hello');
+          }}
+        >
           <HiSolidCog size={22} />
         </button>
       </div>
