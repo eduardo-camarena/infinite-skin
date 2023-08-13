@@ -5,6 +5,7 @@
   "scripts": {
     "start": "DISABLE_ESLINT_PLUGIN=true vite --host --port=3000",
     "dev": "vite",
+    "lint": "eslint --ext ts,tsx src",
     "build": "vite build",
     "serve": "vite preview",
     "format": "prettier --write src"

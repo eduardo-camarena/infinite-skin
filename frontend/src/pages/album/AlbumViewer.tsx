@@ -1,4 +1,4 @@
-import { Link, useNavigate, useParams } from '@solidjs/router';
+import { useNavigate, useParams } from '@solidjs/router';
 import {
   Component,
   createEffect,
@@ -10,15 +10,12 @@ import {
   Show,
   Switch,
 } from 'solid-js';
-import { HiSolidArrowLeft, HiSolidCog } from 'solid-icons/hi';
 
-import Loading from '../../components/Loading';
-import { albumStore, fetchImage, getAlbum } from '../../stores/album';
-import { albumsStore } from '../../stores/albums';
-import Button from '../../InputComponents/Button';
 import AlbumViewerControls, {
   ViewType,
 } from '../../components/AlbumViewerControls';
+import Loading from '../../components/Loading';
+import { currentAlbumStore, fetchImage, getAlbum } from '../../stores/currentAlbum';
 
 const { VITE_HOST: HOST } = import.meta.env;
 
@@ -32,12 +29,12 @@ const AlbumViewer: Component = () => {
   const params = useParams<AlbumViewerParams>();
   const [viewType, setViewType] = createSignal<ViewType>('singleImage');
 
-  if (albumStore.album === null) {
+  if (currentAlbumStore.album === null) {
     createResource(params.albumId, getAlbum);
   }
   const [image, { mutate }] = createResource(() => ({ ...params }), fetchImage);
 
-  const keydown = async (event: KeyboardEvent) => {
+  const keydown = async (event: KeyboardEvent): Promise<void> => {
     if (viewType() === 'singleImage') {
       if (event.key === 'ArrowLeft' && Number.parseInt(params.imageId) > 1) {
         navigate(
@@ -46,7 +43,7 @@ const AlbumViewer: Component = () => {
         mutate(await fetchImage({ ...params }));
       } else if (event.key === 'ArrowRight') {
         navigate(
-          Number.parseInt(params.imageId) < (albumStore.album?.pages ?? 0)
+          Number.parseInt(params.imageId) < (currentAlbumStore.album?.pages ?? 0)
             ? `/a/${params.albumId}/p/${Number.parseInt(params.imageId) + 1}`
             : `/a/${params.albumId}`
         );
@@ -65,47 +62,49 @@ const AlbumViewer: Component = () => {
 
   return (
     <Show
-      when={albumStore.album}
+      when={currentAlbumStore.album}
       fallback={<Loading margin="ml-[calc(50%-1rem)] mt-[calc(50%-1rem)]" />}
     >
-      <div class="flex flex-col justify-center">
-        <AlbumViewerControls
-          albumId={params.albumId}
-          currentPage={Number.parseInt(params.imageId)}
-          lastPage={albumStore.album!.pages}
-          viewType={viewType}
-          setViewType={setViewType}
-        />
-        <div class="flex-1 mx-[10%]">
-          <Switch>
-            <Match when={viewType() === 'singleImage'}>
-              <Show
-                when={image()}
-                fallback={<Loading margin="pt-[calc(50%-1rem)]" />}
-              >
-                <img src={image()} class="w-min h-auto m-auto" alt="logo" />
-              </Show>
-            </Match>
-            <Match when={viewType() === 'allImages'}>
-              <For each={Array.from(Array(albumStore.album!.pages).keys())}>
-                {(idx) => (
-                  <img
-                    src={`${HOST}/albums/${params.albumId}/images/${idx + 1}`}
-                    loading="lazy"
-                    class="w-min h-auto"
-                    alt="logo"
-                  />
-                )}
-              </For>
-            </Match>
-          </Switch>
+      {currentAlbumStore.album && (
+        <div class="flex flex-col justify-center">
+          <AlbumViewerControls
+            albumId={params.albumId}
+            currentPage={Number.parseInt(params.imageId)}
+            lastPage={currentAlbumStore.album.pages}
+            viewType={viewType}
+            setViewType={setViewType}
+          />
+          <div class="flex-1 mx-[10%]">
+            <Switch>
+              <Match when={viewType() === 'singleImage'}>
+                <Show
+                  when={image()}
+                  fallback={<Loading margin="pt-[calc(50%-1rem)]" />}
+                >
+                  <img src={image()} class="w-min h-auto m-auto" alt="logo" />
+                </Show>
+              </Match>
+              <Match when={viewType() === 'allImages'}>
+                <For each={Array.from(Array(currentAlbumStore.album.pages).keys())}>
+                  {(idx) => (
+                    <img
+                      src={`${HOST}/albums/${params.albumId}/images/${idx + 1}`}
+                      loading="lazy"
+                      class="w-min h-auto"
+                      alt="logo"
+                    />
+                  )}
+                </For>
+              </Match>
+            </Switch>
+          </div>
+          <AlbumViewerControls
+            albumId={params.albumId}
+            currentPage={Number.parseInt(params.imageId)}
+            lastPage={currentAlbumStore.album.pages}
+          />
         </div>
-        <AlbumViewerControls
-          albumId={params.albumId}
-          currentPage={Number.parseInt(params.imageId)}
-          lastPage={albumStore.album!.pages}
-        />
-      </div>
+      )}
     </Show>
   );
 };

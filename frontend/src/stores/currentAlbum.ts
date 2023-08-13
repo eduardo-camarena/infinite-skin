@@ -17,7 +17,7 @@ type AlbumStore = {
   images: Image[];
 };
 
-export const [albumStore, setAlbumStore] = createStore<AlbumStore>({
+export const [currentAlbumStore, setCurrentAlbumStore] = createStore<AlbumStore>({
   album: null,
   images: [],
 });
@@ -27,7 +27,7 @@ export const getAlbum = async (albumId: string): Promise<void> => {
     res.json()
   );
 
-  setAlbumStore('album', album);
+  setCurrentAlbumStore('album', album);
 };
 
 export const fetchImage = async (payload: {
@@ -35,7 +35,7 @@ export const fetchImage = async (payload: {
   imageId: string;
 }): Promise<string> => {
   const { albumId, imageId } = payload;
-  const image = albumStore.images.find((image) => image.id === imageId);
+  const image = currentAlbumStore.images.find((image) => image.id === imageId);
   if (image === undefined) {
     const bytes = await fetch(
       `${HOST}/albums/${albumId}/images/${imageId}`
@@ -43,7 +43,7 @@ export const fetchImage = async (payload: {
 
     const image = URL.createObjectURL(bytes);
 
-    setAlbumStore('images', (images) => [
+    setCurrentAlbumStore('images', (images) => [
       ...images,
       {
         id: imageId,
