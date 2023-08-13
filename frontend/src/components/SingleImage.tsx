@@ -1,5 +1,6 @@
-import { Component, createResource } from 'solid-js';
+import { Component, createResource, Show } from 'solid-js';
 
+import Loading from './Loading';
 import { getImage } from '../stores/currentAlbum';
 
 type SingleImageProps = {
@@ -11,11 +12,13 @@ const SingleImage: Component<SingleImageProps> = ({ albumId, imageId }) => {
   const [image] = createResource(() => ({ albumId, imageId }), getImage);
 
   return (
-    <img
-      src={image()}
-      class="w-min h-auto"
-      alt="logo"
-    />
+    <Show when={image()} fallback={<Loading margin="py-12 ml-[calc(50%-1rem)]" />}>
+      <img
+        src={image()}
+        class="w-min h-auto"
+        alt="logo"
+      />
+    </Show>
   );
 };
 

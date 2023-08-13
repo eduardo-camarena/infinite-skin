@@ -24,11 +24,13 @@ export const [currentAlbumStore, setCurrentAlbumStore] =
   });
 
 export const getAlbum = async (albumId: string): Promise<void> => {
-  const album = await fetch(`${HOST}/albums/${albumId}`).then((res) =>
-    res.json()
-  );
+  if (!currentAlbumStore.album || currentAlbumStore.album.id !== Number.parseInt(albumId)) {
+    const album = await fetch(`${HOST}/albums/${albumId}`).then((res) =>
+      res.json()
+    );
 
-  setCurrentAlbumStore('album', album);
+    setCurrentAlbumStore('album', album);
+  }
 };
 
 export const getImage = async (payload: {
