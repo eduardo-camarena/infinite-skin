@@ -19,15 +19,13 @@ const Albums: Component = () => {
 
   createResource(() => (searchParams.page ? +searchParams.page : 1), getAlbums);
 
-  const [lastPageNumber] = createResource(
-    async () => {
-      const response = await fetch('http://localhost:8001/albums/last-page-number').then((res) =>
-        res.json()
-      );
+  const [lastPageNumber] = createResource(async () => {
+    const response = await fetch(
+      'http://localhost:8001/albums/last-page-number'
+    ).then((res) => res.json());
 
-      return response.last_page_number;
-    }
-  );
+    return response.last_page_number;
+  });
 
   return (
     <div class="pt-8 px-4 sm:m-auto sm:w-[600px] lg:w-[1100px]">

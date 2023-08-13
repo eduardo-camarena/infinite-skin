@@ -3,20 +3,24 @@ import { Component, createResource, Show } from 'solid-js';
 
 import Loading from '../../components/Loading';
 import Button from '../../InputComponents/Button';
-import { currentAlbumStore, fetchImage, getAlbum } from '../../stores/currentAlbum';
+import {
+  currentAlbumStore,
+  getImage,
+  getAlbum,
+} from '../../stores/currentAlbum';
 
 const AlbumInfo: Component = () => {
   const { albumId } = useParams<{ albumId: string }>();
 
   createResource(albumId, getAlbum);
-  createResource({ albumId, imageId: '1' }, fetchImage);
+  const [cover] = createResource({ albumId, imageId: 1 }, getImage);
 
   return (
     <Show
-      when={currentAlbumStore.album && currentAlbumStore.images.length}
+      when={currentAlbumStore.album && cover}
       fallback={<Loading margin="ml-[calc(50%-1rem)] mt-[calc(50%-1rem)]" />}
     >
-      {currentAlbumStore.album && currentAlbumStore.images.length && (
+      {currentAlbumStore.album && (
         <div class="pt-6 md:pt-10 px-4 md:px-[15%]">
           <div class="flex flex-col lg:flex-row py-8 md:px-12 lg:px-20 bg-neutral-900">
             <div class="px-8 pb-4 md:pb-0 md:w-[45%] lg:h-[488px] lg:relative">
@@ -24,7 +28,10 @@ const AlbumInfo: Component = () => {
                 class="flex flex-col justify-center h-full"
                 href={`/a/${albumId}/p/1`}
               >
-                <img src={currentAlbumStore.images[0].data} class="h-[400px] w-min" />
+                <img
+                  src={cover()}
+                  class="h-[400px] w-min"
+                />
               </Link>
             </div>
             <div class="flex-1 flex flex-col mx-8">

@@ -10,15 +10,15 @@ type AlbumViewerControlsProps = {
   albumId: string;
   lastPage: number;
 } & (
-    | {
+  | {
       viewType?: undefined;
       setViewType?: undefined;
     }
-    | {
+  | {
       viewType: Accessor<ViewType>;
       setViewType: Setter<ViewType>;
     }
-  );
+);
 
 const AlbumViewerControls: Component<AlbumViewerControlsProps> = ({
   albumId,

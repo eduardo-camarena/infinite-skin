@@ -15,7 +15,12 @@ import AlbumViewerControls, {
   ViewType,
 } from '../../components/AlbumViewerControls';
 import Loading from '../../components/Loading';
-import { currentAlbumStore, fetchImage, getAlbum } from '../../stores/currentAlbum';
+import SingleImage from '../../components/SingleImage';
+import {
+  currentAlbumStore,
+  getImage,
+  getAlbum,
+} from '../../stores/currentAlbum';
 
 const { VITE_HOST: HOST } = import.meta.env;
 
@@ -32,7 +37,13 @@ const AlbumViewer: Component = () => {
   if (currentAlbumStore.album === null) {
     createResource(params.albumId, getAlbum);
   }
-  const [image, { mutate }] = createResource(() => ({ ...params }), fetchImage);
+  const [image, { mutate }] = createResource(
+    () => ({
+      albumId: params.albumId,
+      imageId: Number.parseInt(params.imageId),
+    }),
+    getImage
+  );
 
   const keydown = async (event: KeyboardEvent): Promise<void> => {
     if (viewType() === 'singleImage') {
@@ -40,14 +51,25 @@ const AlbumViewer: Component = () => {
         navigate(
           `/a/${params.albumId}/p/${Number.parseInt(params.imageId) - 1}`
         );
-        mutate(await fetchImage({ ...params }));
+        mutate(
+          await getImage({
+            albumId: params.albumId,
+            imageId: Number.parseInt(params.imageId),
+          })
+        );
       } else if (event.key === 'ArrowRight') {
         navigate(
-          Number.parseInt(params.imageId) < (currentAlbumStore.album?.pages ?? 0)
+          Number.parseInt(params.imageId) <
+            (currentAlbumStore.album?.pages ?? 0)
             ? `/a/${params.albumId}/p/${Number.parseInt(params.imageId) + 1}`
             : `/a/${params.albumId}`
         );
-        mutate(await fetchImage({ ...params }));
+        mutate(
+          await getImage({
+            albumId: params.albumId,
+            imageId: Number.parseInt(params.imageId),
+          })
+        );
       }
     }
   };
@@ -69,7 +91,6 @@ const AlbumViewer: Component = () => {
         <div class="flex flex-col justify-center">
           <AlbumViewerControls
             albumId={params.albumId}
-            currentPage={Number.parseInt(params.imageId)}
             lastPage={currentAlbumStore.album.pages}
             viewType={viewType}
             setViewType={setViewType}
@@ -85,14 +106,11 @@ const AlbumViewer: Component = () => {
                 </Show>
               </Match>
               <Match when={viewType() === 'allImages'}>
-                <For each={Array.from(Array(currentAlbumStore.album.pages).keys())}>
+                <For
+                  each={Array.from(Array(currentAlbumStore.album.pages).keys())}
+                >
                   {(idx) => (
-                    <img
-                      src={`${HOST}/albums/${params.albumId}/images/${idx + 1}`}
-                      loading="lazy"
-                      class="w-min h-auto"
-                      alt="logo"
-                    />
+                    <SingleImage albumId={params.albumId} imageId={idx + 1} />
                   )}
                 </For>
               </Match>
@@ -100,7 +118,6 @@ const AlbumViewer: Component = () => {
           </div>
           <AlbumViewerControls
             albumId={params.albumId}
-            currentPage={Number.parseInt(params.imageId)}
             lastPage={currentAlbumStore.album.pages}
           />
         </div>

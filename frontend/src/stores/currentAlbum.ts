@@ -1,4 +1,4 @@
-import { createStore } from 'solid-js/store';
+import { createStore, produce } from 'solid-js/store';
 
 const { VITE_HOST: HOST } = import.meta.env;
 
@@ -10,17 +10,18 @@ export type Album = {
   artist_id: number;
 };
 
-type Image = { id: string; data: string };
+type Image = { id: number; data: string };
 
 type AlbumStore = {
   album: Album | null;
   images: Image[];
 };
 
-export const [currentAlbumStore, setCurrentAlbumStore] = createStore<AlbumStore>({
-  album: null,
-  images: [],
-});
+export const [currentAlbumStore, setCurrentAlbumStore] =
+  createStore<AlbumStore>({
+    album: null,
+    images: [],
+  });
 
 export const getAlbum = async (albumId: string): Promise<void> => {
   const album = await fetch(`${HOST}/albums/${albumId}`).then((res) =>
@@ -30,9 +31,9 @@ export const getAlbum = async (albumId: string): Promise<void> => {
   setCurrentAlbumStore('album', album);
 };
 
-export const fetchImage = async (payload: {
+export const getImage = async (payload: {
   albumId: string;
-  imageId: string;
+  imageId: number;
 }): Promise<string> => {
   const { albumId, imageId } = payload;
   const image = currentAlbumStore.images.find((image) => image.id === imageId);
@@ -43,13 +44,13 @@ export const fetchImage = async (payload: {
 
     const image = URL.createObjectURL(bytes);
 
-    setCurrentAlbumStore('images', (images) => [
-      ...images,
-      {
+    setCurrentAlbumStore('images', produce((images) => {
+      images.push({
         id: imageId,
         data: image.toString(),
-      },
-    ]);
+      });
+      images.sort((a, b) => a.id - b.id);
+    }));
 
     return image;
   }
