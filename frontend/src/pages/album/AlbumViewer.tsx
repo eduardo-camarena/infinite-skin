@@ -20,9 +20,8 @@ import {
   currentAlbumStore,
   getImage,
   getAlbum,
+  GetImagePayload,
 } from '../../stores/currentAlbum';
-
-const { VITE_HOST: HOST } = import.meta.env;
 
 type AlbumViewerParams = {
   albumId: string;
@@ -45,31 +44,24 @@ const AlbumViewer: Component = () => {
     getImage
   );
 
+  const updateImage = async (payload: GetImagePayload): Promise<void> => {
+    navigate(
+      `/a/${payload.albumId}/p/${payload.imageId}`
+    );
+    mutate(
+      await getImage({
+        albumId: payload.albumId,
+        imageId: payload.imageId,
+      })
+    );
+  };
+
   const keydown = async (event: KeyboardEvent): Promise<void> => {
     if (viewType() === 'singleImage') {
       if (event.key === 'ArrowLeft' && Number.parseInt(params.imageId) > 1) {
-        navigate(
-          `/a/${params.albumId}/p/${Number.parseInt(params.imageId) - 1}`
-        );
-        mutate(
-          await getImage({
-            albumId: params.albumId,
-            imageId: Number.parseInt(params.imageId),
-          })
-        );
+        updateImage({ albumId: params.albumId, imageId: Number.parseInt(params.imageId) - 1 });
       } else if (event.key === 'ArrowRight') {
-        navigate(
-          Number.parseInt(params.imageId) <
-            (currentAlbumStore.album?.pages ?? 0)
-            ? `/a/${params.albumId}/p/${Number.parseInt(params.imageId) + 1}`
-            : `/a/${params.albumId}`
-        );
-        mutate(
-          await getImage({
-            albumId: params.albumId,
-            imageId: Number.parseInt(params.imageId),
-          })
-        );
+        updateImage({ albumId: params.albumId, imageId: Number.parseInt(params.imageId) + 1 });
       }
     }
   };
@@ -92,6 +84,7 @@ const AlbumViewer: Component = () => {
           <AlbumViewerControls
             albumId={params.albumId}
             lastPage={currentAlbumStore.album.pages}
+            updateImage={updateImage}
             viewType={viewType}
             setViewType={setViewType}
           />
@@ -102,7 +95,7 @@ const AlbumViewer: Component = () => {
                   when={image()}
                   fallback={<Loading margin="pt-[calc(50%-1rem)]" />}
                 >
-                  <img src={image()} class="w-min h-auto m-auto" alt="logo" />
+                  <img src={image()} class="w-min h-auto m-auto" alt={params.imageId} />
                 </Show>
               </Match>
               <Match when={viewType() === 'allImages'}>
@@ -119,6 +112,7 @@ const AlbumViewer: Component = () => {
           <AlbumViewerControls
             albumId={params.albumId}
             lastPage={currentAlbumStore.album.pages}
+            updateImage={updateImage}
           />
         </div>
       )}

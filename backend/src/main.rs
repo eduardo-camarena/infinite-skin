@@ -38,7 +38,13 @@ async fn main() -> std::io::Result<()> {
             .wrap(logger)
             .app_data(web::Data::new(app_data.clone()))
             .service(health_checker::health_check)
-            .service(web::scope("/users").service(users::get_user))
+            .service(
+                web::scope("/users")
+                    .service(users::login)
+                    .service(users::get_user)
+                    .service(users::get_users)
+                    .service(users::user_uses_password),
+            )
             .service(
                 web::scope("/albums")
                     .service(albums::last_page_number)

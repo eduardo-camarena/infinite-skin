@@ -16,7 +16,7 @@ const SingleImage: Component<SingleImageProps> = ({ albumId, imageId }) => {
       <img
         src={image()}
         class="w-min h-auto"
-        alt="logo"
+        alt={`${imageId}`}
       />
     </Show>
   );

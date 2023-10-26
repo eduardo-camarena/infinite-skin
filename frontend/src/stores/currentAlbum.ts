@@ -29,14 +29,16 @@ export const getAlbum = async (albumId: string): Promise<void> => {
       res.json()
     );
 
-    setCurrentAlbumStore('album', album);
+    setCurrentAlbumStore({ album: album, images: [] });
   }
 };
 
-export const getImage = async (payload: {
+export type GetImagePayload = {
   albumId: string;
   imageId: number;
-}): Promise<string> => {
+};
+
+export const getImage = async (payload: GetImagePayload): Promise<string> => {
   const { albumId, imageId } = payload;
   const image = currentAlbumStore.images.find((image) => image.id === imageId);
   if (image === undefined) {

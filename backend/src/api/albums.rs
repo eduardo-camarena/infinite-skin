@@ -266,14 +266,13 @@ pub async fn scan_media_folder(app_data: Data<AppData>) -> impl Responder {
                         .await;
 
                 if persisted_series.is_err() {
-                    let new_series_id = sqlx::query_as::<_, (i32,)>(
+                    let (new_series_id,) = sqlx::query_as::<_, (i32,)>(
                         "INSERT INTO series(name) VALUES(?) RETURNING id",
                     )
                     .bind(&series_name)
                     .fetch_one(pool)
                     .await
-                    .unwrap()
-                    .0;
+                    .unwrap();
 
                     series.push(Series {
                         id: new_series_id,

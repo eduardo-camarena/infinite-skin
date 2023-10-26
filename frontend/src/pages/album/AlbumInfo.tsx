@@ -30,6 +30,7 @@ const AlbumInfo: Component = () => {
               >
                 <img
                   src={cover()}
+                  alt="cover"
                   class="h-[400px] w-min"
                 />
               </Link>
