@@ -27,10 +27,13 @@ async fn main() -> std::io::Result<()> {
         config: get_config(),
     };
     HttpServer::new(move || {
+        // this cors policy is obvously bad, but since this is only going to
+        // run a local network I don't really care to set up a proper cors policy.
         let cors = Cors::default()
             .allow_any_origin()
             .allow_any_header()
-            .allow_any_method();
+            .allow_any_method()
+            .supports_credentials();
         let logger = middleware::Logger::default();
 
         App::new()
@@ -43,7 +46,8 @@ async fn main() -> std::io::Result<()> {
                     .service(users::login)
                     .service(users::get_user)
                     .service(users::get_users)
-                    .service(users::user_uses_password),
+                    .service(users::user_uses_password)
+                    .service(users::new_user),
             )
             .service(
                 web::scope("/albums")

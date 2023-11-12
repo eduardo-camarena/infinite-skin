@@ -6,7 +6,7 @@ use actix_web::{
 use derive_more::{Display, Error};
 
 #[derive(Debug, Display, Error)]
-pub enum UserError {
+pub enum ServerError {
     #[display(fmt = "Validation error on field: {}", field)]
     ValidationError { field: String },
 
@@ -14,7 +14,7 @@ pub enum UserError {
     NotFound,
 }
 
-impl error::ResponseError for UserError {
+impl error::ResponseError for ServerError {
     fn error_response(&self) -> HttpResponse {
         HttpResponse::build(self.status_code())
             .insert_header(ContentType::html())
@@ -23,8 +23,8 @@ impl error::ResponseError for UserError {
 
     fn status_code(&self) -> StatusCode {
         match *self {
-            UserError::NotFound => StatusCode::NOT_FOUND,
-            UserError::ValidationError { .. } => StatusCode::BAD_REQUEST,
+            ServerError::NotFound => StatusCode::NOT_FOUND,
+            ServerError::ValidationError { .. } => StatusCode::BAD_REQUEST,
         }
     }
 }

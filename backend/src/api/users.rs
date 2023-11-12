@@ -1,6 +1,8 @@
-use crate::database::entities::user_entity::User;
+use crate::utils::token::get_authorization;
 use crate::AppData;
+use crate::{database::entities::user_entity::User, utils::token::create_token};
 
+use actix_web::HttpRequest;
 use actix_web::{
     get,
     http::StatusCode,
@@ -13,16 +15,18 @@ use serde::{Deserialize, Serialize};
 use sqlx;
 use sqlx::FromRow;
 
-use crate::api::errors::{server_error::ServerError, user_error::UserError};
+use crate::api::errors::server_error::ServerError;
 
 #[derive(Deserialize)]
-struct NewUserPayload {
+pub struct NewUserPayload {
     username: String,
     password: String,
+    role: String,
 }
 
 #[post("/new")]
 pub async fn new_user(app_data: Data<AppData>, payload: Json<NewUserPayload>) -> impl Responder {
+    let config = &app_data.config;
     let conn = &app_data.pool;
     let hashed_password = hash_password(&payload.password);
 
@@ -30,17 +34,39 @@ pub async fn new_user(app_data: Data<AppData>, payload: Json<NewUserPayload>) ->
         return Err(ServerError::InternalError);
     }
 
-    let new_user = sqlx::query_as::<_, MainPageUser>("INSERT INTO user(username, password, role) VALUES(?, ?, ?) RETURNING id, username, role, uses_password")
-        .bind(&payload.username)
-        .bind(&payload.username)
-        .bind(hashed_password.unwrap())
-        .fetch_one(conn)
-        .await;
+    println!(
+        "{} {} {}",
+        payload.username,
+        hashed_password.as_ref().unwrap(),
+        payload.role
+    );
 
-    match new_user {
-        Ok(user) => Ok(Json(user)),
-        Err(_) => Err(ServerError::InternalError),
+    let new_user = sqlx::query_as::<_, (i32, String, String)>(
+        "INSERT INTO user(username, password, role) VALUES(?, ?, ?) RETURNING id, username, role",
+    )
+    .bind(&payload.username)
+    .bind(hashed_password.as_ref().unwrap())
+    .bind(&payload.role)
+    .fetch_one(conn)
+    .await;
+
+    if new_user.is_err() {
+        return Err(ServerError::InternalError);
     }
+
+    let (id, username, role) = new_user.unwrap();
+    let token = create_token(id, &config.jwt_secret);
+
+    if token.is_err() {
+        return Err(ServerError::InternalError);
+    }
+
+    return Ok(Json(LoginResponse {
+        id,
+        username,
+        role,
+        token: token.unwrap(),
+    }));
 }
 
 #[derive(Serialize, Deserialize, FromRow)]
@@ -83,7 +109,7 @@ pub async fn user_uses_password(app_data: Data<AppData>, path: Path<i32>) -> imp
     .await;
 
     return match res {
-        Err(_) => Err(UserError::NotFound),
+        Err(_) => Err(ServerError::NotFound),
         Ok(user) => Ok(Json(UsesPasswordReponse {
             uses_password: user.uses_password,
         })),
@@ -92,68 +118,82 @@ pub async fn user_uses_password(app_data: Data<AppData>, path: Path<i32>) -> imp
 
 #[derive(Deserialize)]
 pub struct LoginPayload {
+    id: i32,
     pub password: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, FromRow)]
-pub struct ViewableUser {
+#[derive(Serialize, FromRow)]
+pub struct LoginResponse {
     id: i32,
     username: String,
     role: String,
+    token: String,
 }
 
-#[post("/{user_id}/login")]
-pub async fn login(
-    app_data: Data<AppData>,
-    path: Path<i32>,
-    payload: Json<LoginPayload>,
-) -> impl Responder {
+#[post("/login")]
+pub async fn login(app_data: Data<AppData>, payload: Json<LoginPayload>) -> impl Responder {
+    let config = &app_data.config;
     let conn = &app_data.pool;
-    let user_id = path.into_inner();
 
-    let res = sqlx::query_as!(User, "SELECT * FROM user WHERE id=?", user_id)
+    let res = sqlx::query_as!(User, "SELECT * FROM user WHERE id=?", payload.id)
         .fetch_one(conn)
         .await;
 
     if res.is_err() {
-        return Err(UserError::NotFound);
+        return Err(ServerError::NotFound);
     }
 
     let user = res.unwrap();
 
     if user.uses_password == 1 {
         if payload.password.is_none() {
-            return Err(UserError::ValidationError {
+            return Err(ServerError::ValidationError {
                 field: String::from("password"),
             });
         }
 
         if verify(payload.password.as_ref().unwrap(), user.password.as_str()).is_err() {
-            return Err(UserError::NotFound);
+            return Err(ServerError::NotFound);
         };
     }
 
-    return Ok(Json(ViewableUser {
+    let token = create_token(user.id, &config.jwt_secret);
+    if token.is_err() {
+        return Err(ServerError::NotFound);
+    }
+
+    return Ok(Json(LoginResponse {
         id: user.id,
         username: user.username,
         role: user.role,
+        token: token.unwrap(),
     }));
 }
 
+#[derive(Serialize, FromRow)]
+pub struct ViewableUser {
+    id: i32,
+    username: String,
+    role: String,
+}
+
 #[get("/me")]
-pub async fn get_user(app_data: Data<AppData>) -> impl Responder {
+pub async fn get_user(app_data: Data<AppData>, req: HttpRequest) -> impl Responder {
     let conn = &app_data.pool;
+    let auth = get_authorization(&req).unwrap();
+
+    println!("{}", auth.sub);
 
     let user = sqlx::query_as!(
         ViewableUser,
         "SELECT id, username, role FROM user WHERE id=?",
-        1
+        auth.sub
     )
     .fetch_one(conn)
     .await;
 
     return match user {
-        Err(_) => Err(UserError::NotFound),
+        Err(_) => Err(ServerError::NotFound),
         Ok(user) => Ok(Json(user)),
     };
 }

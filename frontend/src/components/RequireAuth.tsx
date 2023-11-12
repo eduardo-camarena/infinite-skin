@@ -1,24 +1,20 @@
 import { Outlet, useNavigate } from '@solidjs/router';
 import { Component, createEffect } from 'solid-js';
 
-import { authStore, setAuthStore } from '../stores/authStore';
+import { getTokenInfo, getUser } from '../stores/authStore';
 
 const RequireAuth: Component = () => {
   const navigate = useNavigate();
-  const auth = authStore;
 
   createEffect(() => {
-    const savedUser = localStorage.getItem('user');
-    if (!auth.user && !savedUser) {
+    const persistedToken = localStorage.getItem('token');
+    if (!persistedToken) {
       navigate('/login');
-    } else if (savedUser) {
-      const { loggedInAt, ...newUser } = JSON.parse(savedUser);
-      if (new Date(loggedInAt).getDate() < new Date().getDate()) {
-        navigate('/login');
-      }
-      setAuthStore('user', newUser);
+    } else {
+      getTokenInfo();
+      getUser();
     }
-  }, []);
+  });
 
   return (
     <>

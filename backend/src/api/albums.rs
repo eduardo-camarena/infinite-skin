@@ -12,8 +12,7 @@ use crate::database::entities::{
 };
 use crate::AppData;
 
-use super::errors::server_error::ServerError;
-use super::errors::user_error::UserError;
+use crate::api::errors::server_error::ServerError;
 
 #[derive(Serialize, Deserialize)]
 struct GetAlbumsResponse {
@@ -35,7 +34,7 @@ pub async fn get_albums(path: Path<i32>, app_data: Data<AppData>) -> impl Respon
     .await;
 
     return match albums {
-        Err(_) => Err(UserError::NotFound),
+        Err(_) => Err(ServerError::NotFound),
         Ok(albums) => Ok(Json(albums)),
     };
 }
@@ -77,7 +76,7 @@ pub async fn get_file(
             .await;
 
     if album.is_err() {
-        return Err(UserError::ValidationError {
+        return Err(ServerError::ValidationError {
             field: String::from("album_id"),
         });
     }
@@ -113,7 +112,7 @@ pub async fn get_file(
         return Ok(file.unwrap().into_response(&req));
     }
 
-    return Err(UserError::NotFound);
+    return Err(ServerError::NotFound);
 }
 
 #[get("/{album_id}")]
@@ -131,7 +130,7 @@ pub async fn get_album_info(app_data: Data<AppData>, path: Path<i32>) -> impl Re
     .await;
 
     return match album {
-        Err(_) => Err(UserError::NotFound),
+        Err(_) => Err(ServerError::NotFound),
         Ok(album) => {
             println!("{}", album.id);
             Ok(Json(album))
