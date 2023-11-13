@@ -41,7 +41,10 @@ const Albums: Component = () => {
           )}
         </For>
       </div>
-      <Show when={lastPageNumber() !== undefined} fallback={<Loading margin="ml-[calc(50%-1rem)] mt-[calc(50%-1rem)]" />}>
+      <Show
+        when={lastPageNumber() !== undefined}
+        fallback={<Loading margin="ml-[calc(50%-1rem)] mt-[calc(50%-1rem)]" />}
+      >
         <Paginator lastPage={lastPageNumber() ?? 0} getNewPage={getAlbums} />
       </Show>
     </div>

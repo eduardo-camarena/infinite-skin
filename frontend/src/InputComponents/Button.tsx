@@ -2,7 +2,10 @@ import type { Component, JSX } from 'solid-js';
 
 import { classNames } from '../utils/classNames';
 
-type ButtonProps = Omit<JSX.ButtonHTMLAttributes<HTMLButtonElement>, 'disabled'> & {
+type ButtonProps = Omit<
+  JSX.ButtonHTMLAttributes<HTMLButtonElement>,
+  'disabled'
+> & {
   text: string | JSX.Element;
   padding?: string;
   disabled?: () => boolean;
@@ -48,7 +51,7 @@ const Button: Component<ButtonProps> = ({
 
   return (
     <button
-      disabled={disabled && disabled() === true || variant === 'gray'}
+      disabled={(disabled && disabled() === true) || variant === 'gray'}
       class={classNames(
         padding,
         roundedClass,

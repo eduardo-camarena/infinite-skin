@@ -14,15 +14,15 @@ type AlbumViewerControlsProps = {
   lastPage: number;
   updateImage: (payload: GetImagePayload) => Promise<void>;
 } & (
-    | {
+  | {
       viewType?: undefined;
       setViewType?: undefined;
     }
-    | {
+  | {
       viewType: Accessor<ViewType>;
       setViewType: Setter<ViewType>;
     }
-  );
+);
 
 const AlbumViewerControls: Component<AlbumViewerControlsProps> = ({
   albumId,
@@ -39,31 +39,51 @@ const AlbumViewerControls: Component<AlbumViewerControlsProps> = ({
         <HiSolidArrowLeft size={22} />
       </Link>
       <div class="flex-1 flex justify-center absolute w-full py-1.5">
-        <span> <FaSolidAnglesLeft size={22} onClick={() => {
-          updateImage({ albumId, imageId: 1 });
-        }} /> </span>
+        <span>
+          {' '}
+          <FaSolidAnglesLeft
+            size={22}
+            onClick={() => {
+              updateImage({ albumId, imageId: 1 });
+            }}
+          />{' '}
+        </span>
         <span class="px-4">
-          <button onClick={() => {
-            const imageId = Number.parseInt(params.imageId);
-            if (imageId > 1) {
-              updateImage({ albumId, imageId: imageId - 1 });
-            }
-          }}>
+          <button
+            onClick={() => {
+              const imageId = Number.parseInt(params.imageId);
+              if (imageId > 1) {
+                updateImage({ albumId, imageId: imageId - 1 });
+              }
+            }}
+          >
             <AiOutlineLeft size={22} />
           </button>
         </span>
         <p class="my-auto">
           {params.imageId} of {lastPage}
         </p>
-        <span class="px-4"> <AiOutlineRight size={22} onClick={() => {
-          const imageId = Number.parseInt(params.imageId);
-          if (imageId < lastPage) {
-            updateImage({ albumId, imageId: imageId + 1 });
-          }
-        }} /> </span>
-        <span> <FaSolidAnglesRight size={22} onClick={() => {
-          updateImage({ albumId, imageId: lastPage });
-        }} /> </span>
+        <span class="px-4">
+          {' '}
+          <AiOutlineRight
+            size={22}
+            onClick={() => {
+              const imageId = Number.parseInt(params.imageId);
+              if (imageId < lastPage) {
+                updateImage({ albumId, imageId: imageId + 1 });
+              }
+            }}
+          />{' '}
+        </span>
+        <span>
+          {' '}
+          <FaSolidAnglesRight
+            size={22}
+            onClick={() => {
+              updateImage({ albumId, imageId: lastPage });
+            }}
+          />{' '}
+        </span>
       </div>
       <div class="flex absolute right-4 gap-4 py-1.5">
         {viewType && (

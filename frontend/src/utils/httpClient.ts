@@ -12,7 +12,9 @@ export const httpClient = axios.create({
 
 httpClient.interceptors.request.use((config) => {
   config.withCredentials = Boolean(authStore.token);
-  config.headers.Authorization = authStore.token ? `Bearer ${authStore.token}` : '';
+  config.headers.Authorization = authStore.token
+    ? `Bearer ${authStore.token}`
+    : '';
 
   return config;
 });
@@ -21,5 +23,5 @@ httpClient.interceptors.response.use(
   (response) => response,
   (error) => {
     throw (error as AxiosError).response?.data;
-  },
+  }
 );

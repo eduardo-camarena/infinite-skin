@@ -19,15 +19,23 @@ type DecodedToken = {
 type UserStore = {
   loading: 'idle' | 'pending';
   user: User | null;
-} & ({
-  token: null;
-  decodedToken: null;
-} | {
-  token: string;
-  decodedToken: DecodedToken;
-});
+} & (
+  | {
+      token: null;
+      decodedToken: null;
+    }
+  | {
+      token: string;
+      decodedToken: DecodedToken;
+    }
+);
 
-export const [authStore, setAuthStore] = createStore<UserStore>({ loading: 'idle', user: null, token: null, decodedToken: null });
+export const [authStore, setAuthStore] = createStore<UserStore>({
+  loading: 'idle',
+  user: null,
+  token: null,
+  decodedToken: null,
+});
 
 export const getTokenInfo = (): void => {
   const persistedToken = localStorage.getItem('token');
@@ -56,13 +64,13 @@ export const getUser = async (): Promise<void> => {
   console.log(data);
 
   setAuthStore(() => ({ user: data }));
-}
+};
 
 export type NewUserPayload = {
   username: string;
   password: string;
   role: 'admin' | 'user';
-}
+};
 
 export const newUser = async (payload: NewUserPayload): Promise<User> => {
   const { data } = await httpClient.post(`/users/new`, payload);
@@ -71,9 +79,12 @@ export const newUser = async (payload: NewUserPayload): Promise<User> => {
   setAuthStore(() => ({ user, token }));
   localStorage.setItem('token', token);
   return user;
-}
+};
 
-export const login = async (payload: { id: number; password?: string }): Promise<User> => {
+export const login = async (payload: {
+  id: number;
+  password?: string;
+}): Promise<User> => {
   const { data } = await httpClient.post(`/users/login`, payload);
   const { token, ...user } = data;
 

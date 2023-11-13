@@ -24,7 +24,10 @@ export const [currentAlbumStore, setCurrentAlbumStore] =
   });
 
 export const getAlbum = async (albumId: string): Promise<void> => {
-  if (!currentAlbumStore.album || currentAlbumStore.album.id !== Number.parseInt(albumId)) {
+  if (
+    !currentAlbumStore.album ||
+    currentAlbumStore.album.id !== Number.parseInt(albumId)
+  ) {
     const album = await fetch(`${HOST}/albums/${albumId}`).then((res) =>
       res.json()
     );
@@ -48,13 +51,16 @@ export const getImage = async (payload: GetImagePayload): Promise<string> => {
 
     const image = URL.createObjectURL(bytes);
 
-    setCurrentAlbumStore('images', produce((images) => {
-      images.push({
-        id: imageId,
-        data: image.toString(),
-      });
-      images.sort((a, b) => a.id - b.id);
-    }));
+    setCurrentAlbumStore(
+      'images',
+      produce((images) => {
+        images.push({
+          id: imageId,
+          data: image.toString(),
+        });
+        images.sort((a, b) => a.id - b.id);
+      })
+    );
 
     return image;
   }

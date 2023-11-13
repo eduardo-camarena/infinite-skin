@@ -10,8 +10,10 @@ const Login: Component = () => {
   const [users] = createResource(getUsers);
 
   return (
-    <Switch fallback={<Loading margin="ml-[calc(50%-1rem)] mt-[calc(50%-1rem)]" />}>
-      <Match when={users()?.length === 0} >
+    <Switch
+      fallback={<Loading margin="ml-[calc(50%-1rem)] mt-[calc(50%-1rem)]" />}
+    >
+      <Match when={users()?.length === 0}>
         <CreateUser isAdmin />
       </Match>
 
@@ -20,11 +22,14 @@ const Login: Component = () => {
           <div class="flex flex-wrap justify-center gap-8">
             <For each={users()}>
               {(user) => (
-                <div class="flex flex-col" onClick={() => {
-                  login({ id: user.id }).then(() => {
-                    navigate('/');
-                  });
-                }}>
+                <div
+                  class="flex flex-col"
+                  onClick={() => {
+                    login({ id: user.id }).then(() => {
+                      navigate('/');
+                    });
+                  }}
+                >
                   <p>{user.username}</p>
                 </div>
               )}

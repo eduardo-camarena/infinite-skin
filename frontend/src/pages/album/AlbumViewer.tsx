@@ -45,9 +45,7 @@ const AlbumViewer: Component = () => {
   );
 
   const updateImage = async (payload: GetImagePayload): Promise<void> => {
-    navigate(
-      `/a/${payload.albumId}/p/${payload.imageId}`
-    );
+    navigate(`/a/${payload.albumId}/p/${payload.imageId}`);
     mutate(
       await getImage({
         albumId: payload.albumId,
@@ -59,9 +57,15 @@ const AlbumViewer: Component = () => {
   const keydown = async (event: KeyboardEvent): Promise<void> => {
     if (viewType() === 'singleImage') {
       if (event.key === 'ArrowLeft' && Number.parseInt(params.imageId) > 1) {
-        updateImage({ albumId: params.albumId, imageId: Number.parseInt(params.imageId) - 1 });
+        updateImage({
+          albumId: params.albumId,
+          imageId: Number.parseInt(params.imageId) - 1,
+        });
       } else if (event.key === 'ArrowRight') {
-        updateImage({ albumId: params.albumId, imageId: Number.parseInt(params.imageId) + 1 });
+        updateImage({
+          albumId: params.albumId,
+          imageId: Number.parseInt(params.imageId) + 1,
+        });
       }
     }
   };
@@ -95,7 +99,11 @@ const AlbumViewer: Component = () => {
                   when={image()}
                   fallback={<Loading margin="pt-[calc(50%-1rem)]" />}
                 >
-                  <img src={image()} class="w-min h-auto m-auto" alt={params.imageId} />
+                  <img
+                    src={image()}
+                    class="w-min h-auto m-auto"
+                    alt={params.imageId}
+                  />
                 </Show>
               </Match>
               <Match when={viewType() === 'allImages'}>

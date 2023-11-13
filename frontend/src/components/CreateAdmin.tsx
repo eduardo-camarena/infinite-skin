@@ -11,13 +11,18 @@ import { useNavigate } from '@solidjs/router';
 import { fieldErrors } from '../utils/fieldValidation';
 
 export const userSchema = z.object({
-  username: z.string({ required_error: fieldErrors.required }).min(4, fieldErrors.minLength(4)).max(12, fieldErrors.maxLength(12)),
-  password: z.string({ required_error: "El campo es requerido" }).min(8, fieldErrors.minLength(8)),
+  username: z
+    .string({ required_error: fieldErrors.required })
+    .min(4, fieldErrors.minLength(4))
+    .max(12, fieldErrors.maxLength(12)),
+  password: z
+    .string({ required_error: 'El campo es requerido' })
+    .min(8, fieldErrors.minLength(8)),
 });
 
 type CreateUserProps = {
   isAdmin?: true;
-}
+};
 
 const CreateUser: Component<CreateUserProps> = ({ isAdmin = false }) => {
   const formHandler = useFormHandler(zodSchema(userSchema));
@@ -34,16 +39,28 @@ const CreateUser: Component<CreateUserProps> = ({ isAdmin = false }) => {
     onSubmitHandler(event, formHandler, newUser, payload).then(() => {
       navigate('/');
     });
-  }
+  };
 
   return (
     <form class="flex flex-col pt-4 px-8 lg:px-[35%]" onSubmit={onSubmit}>
       <div class="pb-4">
-        <TextInput label="Nombre de usuario" name="username" formHandler={formHandler} />
-        <TextInput label="Contraseña" name="password" formHandler={formHandler} />
+        <TextInput
+          label="Nombre de usuario"
+          name="username"
+          formHandler={formHandler}
+        />
+        <TextInput
+          label="Contraseña"
+          name="password"
+          formHandler={formHandler}
+        />
       </div>
-      <Button text="Submit" variant="blue" disabled={formHandler.isFormInvalid} />
-    </form >
+      <Button
+        text="Submit"
+        variant="blue"
+        disabled={formHandler.isFormInvalid}
+      />
+    </form>
   );
 };
 

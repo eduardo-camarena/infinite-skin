@@ -28,11 +28,7 @@ const AlbumInfo: Component = () => {
                 class="flex flex-col justify-center h-full"
                 href={`/a/${albumId}/p/1`}
               >
-                <img
-                  src={cover()}
-                  alt="cover"
-                  class="h-[400px] w-min"
-                />
+                <img src={cover()} alt="cover" class="h-[400px] w-min" />
               </Link>
             </div>
             <div class="flex-1 flex flex-col mx-8">

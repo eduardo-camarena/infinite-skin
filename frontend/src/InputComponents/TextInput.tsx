@@ -1,12 +1,17 @@
 import { Component, JSX, Show, splitProps } from 'solid-js';
 import { FieldProps, Field } from 'solid-form-handler';
 
-type TextInputProps = JSX.InputHTMLAttributes<HTMLInputElement> & FieldProps & {
-  label?: string;
-};
+type TextInputProps = JSX.InputHTMLAttributes<HTMLInputElement> &
+  FieldProps & {
+    label?: string;
+  };
 
 const TextInput: Component<TextInputProps> = (props) => {
-  const [local, rest] = splitProps(props, ['classList', 'label', 'formHandler'])
+  const [local, rest] = splitProps(props, [
+    'classList',
+    'label',
+    'formHandler',
+  ]);
   return (
     <Field
       {...props}
