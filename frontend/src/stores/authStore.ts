@@ -2,12 +2,10 @@ import { jwtDecode } from 'jwt-decode';
 import { createStore } from 'solid-js/store';
 import { httpClient } from '../utils/httpClient';
 
-const { VITE_HOST: HOST } = import.meta.env;
-
 type User = {
   id: number;
   username: string;
-  role: 'admin';
+  role: 'admin' | 'user';
 };
 
 type DecodedToken = {
@@ -20,15 +18,15 @@ type UserStore = {
   loading: 'idle' | 'pending';
   user: User | null;
 } & (
-  | {
+    | {
       token: null;
       decodedToken: null;
     }
-  | {
+    | {
       token: string;
       decodedToken: DecodedToken;
     }
-);
+  );
 
 export const [authStore, setAuthStore] = createStore<UserStore>({
   loading: 'idle',
