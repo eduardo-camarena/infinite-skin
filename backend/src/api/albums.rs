@@ -105,6 +105,7 @@ pub async fn get_file(
     }
 
     file_path.set_extension("png");
+    println!("{:?}", file_path);
     file = actix_files::NamedFile::open_async(&file_path).await;
 
     if file.is_ok() {

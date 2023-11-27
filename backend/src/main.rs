@@ -58,7 +58,7 @@ async fn main() -> std::io::Result<()> {
                     .service(albums::get_album_info),
             )
     })
-    .bind(("localhost", 8001))?
+    .bind("0.0.0.0:80")?
     .run()
     .await
 }

@@ -1,4 +1,4 @@
-use dotenv::dotenv;
+use dotenvy::dotenv;
 
 use std::env;
 
@@ -12,7 +12,7 @@ pub fn get_config() -> Config {
     dotenv().ok();
 
     return Config {
-        media_folder: env::var("MEDIA_FOLDER").expect("Media folder not set"),
+        media_folder: "/media_folder".to_string(),
         jwt_secret: env::var("JWT_SECRET").expect("JWT secret not set"),
     };
 }

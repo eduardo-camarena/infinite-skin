@@ -1,4 +1,4 @@
-use dotenv::dotenv;
+use dotenvy::dotenv;
 use sqlx::mysql::{MySqlPool, MySqlPoolOptions};
 use std::env;
 
