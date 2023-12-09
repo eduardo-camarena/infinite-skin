@@ -1,5 +1,5 @@
-import { Component, JSX, Show, splitProps } from 'solid-js';
 import { FieldProps, Field } from 'solid-form-handler';
+import { Component, JSX, Show, splitProps } from 'solid-js';
 
 type TextInputProps = JSX.InputHTMLAttributes<HTMLInputElement> &
   FieldProps & {
@@ -43,9 +43,5 @@ const TextInput: Component<TextInputProps> = (props) => {
     />
   );
 };
-// {!error
-//                 ? ' shadow-sm focus:ring-indigo-500 focus:border-indigo-500 border-gray-300'
-//                 : 'border-red-300 dark:border-red-500 text-red-900 dark:text-red-600 placeholder-red-300 focus:outline-none focus:ring-red-500 focus:border-red-500'
-//                 }
 
 export default TextInput;
