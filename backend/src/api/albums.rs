@@ -7,7 +7,7 @@ use actix_web::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{self, FromRow, MySql};
-use walkdir::{DirEntry, WalkDir};
+use walkdir::WalkDir;
 
 use crate::database::entities::{
     album_entity::Album, artist_entity::Artist, series_entity::Series,
@@ -84,34 +84,36 @@ pub async fn get_file(
     }
 
     let (name, full_name) = album.unwrap();
-    let file_location = format!(
-        "{}/images/{}/{} ({}).jpg",
-        app_data.config.media_folder, full_name, name, image_id
+    let file_location = format!("{}/images/{}", app_data.config.media_folder, full_name);
+
+    // let mut file_path = std::path::PathBuf::from(file_location);
+    // let mut file = actix_files::NamedFile::open_async(&file_path).await;
+    //
+    // // TODO: find a better way to match different extensions that isn't a loop
+    // if file.is_ok() {
+    //     println!("{}", file_path.to_string_lossy());
+    //     return Ok(file.unwrap().into_response(&req));
+    // }
+    //
+    // file_path.set_extension("jpeg");
+    // file = actix_files::NamedFile::open_async(&file_path).await;
+    //
+    // if file.is_ok() {
+    //     println!("{}", file_path.to_string_lossy());
+    //     return Ok(file.unwrap().into_response(&req));
+    // }
+    //
+    // file_path.set_extension("png");
+    // println!("{:?}", file_path);
+    let file_path = format!(
+        "{}/{}",
+        &file_location,
+        &get_album_images(&file_location)[(image_id - 1) as usize]
     );
-
-    let mut file_path = std::path::PathBuf::from(file_location);
-    let mut file = actix_files::NamedFile::open_async(&file_path).await;
-
-    // TODO: find a better way to match different extensions that isn't a loop
-    if file.is_ok() {
-        println!("{}", file_path.to_string_lossy());
-        return Ok(file.unwrap().into_response(&req));
-    }
-
-    file_path.set_extension("jpeg");
-    file = actix_files::NamedFile::open_async(&file_path).await;
+    println!("{}", file_path);
+    let file = actix_files::NamedFile::open_async(&file_path).await;
 
     if file.is_ok() {
-        println!("{}", file_path.to_string_lossy());
-        return Ok(file.unwrap().into_response(&req));
-    }
-
-    file_path.set_extension("png");
-    println!("{:?}", file_path);
-    file = actix_files::NamedFile::open_async(&file_path).await;
-
-    if file.is_ok() {
-        println!("{}", file_path.to_string_lossy());
         return Ok(file.unwrap().into_response(&req));
     }
 
@@ -327,38 +329,25 @@ fn get_albums_with_metadata(
             .split_once(format!("{}/", root_folder).as_str())
             .unwrap();
 
-        let metadata = get_metadata(&full_name.to_string());
-
-        let album_with_metadata = AlbumWithMetadata {
+        let mut album_with_metadata = AlbumWithMetadata {
             name: String::from(name),
             full_name: full_name.to_string(),
-            artist: metadata.artist,
-            series: metadata.series,
-            chapter_number: metadata.chapter_number,
+            artist: None,
+            series: None,
+            chapter_number: None,
         };
+        add_metadata(&full_name.to_string(), &mut album_with_metadata);
 
         albums_with_metadata.push(album_with_metadata);
     }
     return albums_with_metadata;
 }
 
-struct Metadata {
-    artist: Option<String>,
-    series: Option<String>,
-    chapter_number: Option<i32>,
-}
-
-fn get_metadata(folder_path: &String) -> Metadata {
-    let mut album_metadata = Metadata {
-        artist: None,
-        series: None,
-        chapter_number: None,
-    };
-
+fn add_metadata(folder_path: &String, album_metadata: &mut AlbumWithMetadata) {
     for folder in folder_path.split("/") {
-        let (_, metadata) = folder.split_once(" [").unwrap_or((&folder, ""));
+        let (_, metadata) = folder.split_once("[").unwrap_or((&folder, ""));
         if metadata.len() > 0 {
-            for item in metadata[..metadata.len() - 1].split(" ") {
+            for item in metadata[..metadata.len() - 1].split(", ") {
                 if item.contains("artist") {
                     album_metadata.artist = Some(String::from(item.split_once("=").unwrap().1));
                 } else if item.contains("series") {
@@ -372,8 +361,6 @@ fn get_metadata(folder_path: &String) -> Metadata {
             }
         }
     }
-
-    return album_metadata;
 }
 
 fn get_files(folder_path: &String) -> Vec<String> {
@@ -383,4 +370,17 @@ fn get_files(folder_path: &String) -> Vec<String> {
         .filter(|file| file.as_ref().unwrap().metadata().unwrap().is_file())
         .map(|file| file.unwrap().path().into_os_string().into_string().unwrap())
         .collect();
+}
+
+fn get_album_images(folder: &String) -> Vec<String> {
+    let files = WalkDir::new(folder)
+        .into_iter()
+        .map(|file| file.ok())
+        .filter(|file| file.is_some())
+        .map(|file| file.unwrap())
+        .filter(|file| file.metadata().unwrap().is_file())
+        .map(|folder| String::from(folder.file_name().to_str().unwrap()))
+        .collect::<Vec<String>>();
+
+    return files;
 }
