@@ -32,20 +32,6 @@ services:
     volumes:
       - ./frontend/src:/app/src
 
-  is_backend:
-    image: is_backend
-    container_name: is_backend
-    build:
-      context: ./backend
-    env_file: ./backend/.env
-    ports:
-      - '8001:80'
-    networks:
-      - infinite-skin
-    volumes:
-      - ./backend/src:/app/src
-      - ${MEDIA_FOLDER?error}:/app/media_folder
-
 volumes:
   is_dbdata:
 

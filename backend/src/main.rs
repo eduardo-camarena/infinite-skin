@@ -2,12 +2,15 @@ mod api;
 mod database;
 mod utils;
 
+use std::env;
+
 use crate::api::{albums, health_checker, users};
 use crate::database::db::establish_connection;
 use crate::utils::config::{get_config, Config};
 
 use actix_cors::Cors;
 use actix_web::{middleware, web, App, HttpServer};
+use dotenvy::dotenv;
 use sqlx::mysql::MySqlPool;
 
 #[derive(Clone)]
@@ -20,6 +23,7 @@ pub struct AppData {
 async fn main() -> std::io::Result<()> {
     std::env::set_var("RUST_LOG", "debug");
     env_logger::init();
+    dotenv().ok();
 
     let pool: MySqlPool = establish_connection().await;
     let app_data = AppData {
@@ -58,7 +62,13 @@ async fn main() -> std::io::Result<()> {
                     .service(albums::get_album_info),
             )
     })
-    .bind("0.0.0.0:80")?
+    .bind((
+        "localhost",
+        env::var("APP_PORT")
+            .expect("app port not set")
+            .parse::<u16>()
+            .unwrap_or(80),
+    ))?
     .run()
     .await
 }
