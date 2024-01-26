@@ -1,5 +1,6 @@
 import { jwtDecode } from 'jwt-decode';
 import { createStore } from 'solid-js/store';
+
 import { httpClient } from '../utils/httpClient';
 
 type User = {
@@ -18,15 +19,15 @@ type UserStore = {
   loading: 'idle' | 'pending';
   user: User | null;
 } & (
-  | {
+    | {
       token: null;
       decodedToken: null;
     }
-  | {
+    | {
       token: string;
       decodedToken: DecodedToken;
     }
-);
+  );
 
 export const [authStore, setAuthStore] = createStore<UserStore>({
   loading: 'idle',
@@ -42,7 +43,7 @@ export const getTokenInfo = (): void => {
     return;
   }
 
-  let decodedToken = jwtDecode<DecodedToken>(persistedToken);
+  const decodedToken = jwtDecode<DecodedToken>(persistedToken);
 
   if (new Date().valueOf() > decodedToken.exp * 1000) {
     return;
@@ -58,10 +59,16 @@ export const getUsers = async (): Promise<Omit<User, 'role'>[]> => {
 };
 
 export const getUser = async (): Promise<void> => {
-  const { data } = await httpClient.get('/users/me');
-  console.log(data);
+  try {
+    const { data } = await httpClient.get('/users/me');
 
-  setAuthStore(() => ({ user: data }));
+    setAuthStore(() => ({ user: data }));
+  } catch (e) {
+    localStorage.removeItem('token');
+    setAuthStore(() => ({ token: null, decodedToken: null }));
+
+    throw e;
+  }
 };
 
 export type NewUserPayload = {

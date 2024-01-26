@@ -7,7 +7,7 @@ import { httpClient } from '../utils/httpClient';
 
 const Settings: Component = () => {
   return (
-    <div class="flex flex-col content-center items-center h-full">
+    <div class="pt-8 flex flex-col content-center items-center h-full">
       <Show
         when={authStore.user}
         fallback={<Loading margin="ml-[calc(50%-1rem)] mt-[calc(50%-1rem)]" />}
@@ -17,7 +17,7 @@ const Settings: Component = () => {
             text="Scan"
             variant="blue"
             onClick={() => {
-              httpClient.post('/albums/scan').then((response) => {
+              httpClient.post('/scan').then((response) => {
                 console.log(response.status);
               });
             }}

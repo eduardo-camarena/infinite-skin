@@ -201,7 +201,7 @@ pub async fn get_user(app_data: Data<AppData>, req: HttpRequest) -> impl Respond
 // the cost was not really tested, so this is probably not good for a real app,
 // but also this is only going to be run by on local networks.
 pub fn hash_password(password: &String) -> Result<String, StatusCode> {
-    return bcrypt::hash(password, 14).map_err(|_error| StatusCode::INTERNAL_SERVER_ERROR);
+    return bcrypt::hash(password, 8).map_err(|_error| StatusCode::INTERNAL_SERVER_ERROR);
 }
 
 pub fn verify(password: &String, hash: &str) -> Result<bool, StatusCode> {

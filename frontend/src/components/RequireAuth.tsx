@@ -12,7 +12,9 @@ const RequireAuth: Component = () => {
       navigate('/login');
     } else {
       getTokenInfo();
-      getUser();
+      getUser().catch(() => {
+        navigate('/login');
+      });
     }
   });
 

@@ -4,7 +4,7 @@ mod utils;
 
 use std::env;
 
-use crate::api::{albums, health_checker, users};
+use crate::api::{albums, health_checker, scan, users};
 use crate::database::db::establish_connection;
 use crate::utils::config::{get_config, Config};
 
@@ -45,6 +45,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(logger)
             .app_data(web::Data::new(app_data.clone()))
             .service(health_checker::health_check)
+            .service(scan::scan_media_folder)
             .service(
                 web::scope("/users")
                     .service(users::login)
@@ -56,7 +57,6 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/albums")
                     .service(albums::last_page_number)
-                    .service(albums::scan_media_folder)
                     .service(albums::get_file)
                     .service(albums::get_albums)
                     .service(albums::get_album_info),
