@@ -21,7 +21,7 @@ struct AlbumName {
 pub async fn scan_media_folder(app_data: Data<AppData>) -> impl Responder {
     let pool = &app_data.pool;
 
-    let albums = scan_albums(format!("{}/images", &app_data.config.media_folder), pool).await;
+    let albums = scan_albums(format!("{}/images2", &app_data.config.media_folder), pool).await;
 
     return albums;
 }
@@ -58,104 +58,120 @@ async fn scan_albums(
     let mut artists: Vec<Artist> = vec![];
     let mut series: Vec<Series> = vec![];
     for album in albums_to_persist {
-        let full_name = format!("{}/{}", &media_folder, album.full_name);
         let mut artist_id: Option<i32> = None;
-        let pages = get_files(&full_name)
-            .into_iter()
-            .filter(|file| file.contains(".jpg") || file.contains(".jpeg") || file.contains(".png"))
-            .collect::<Vec<String>>();
-
-        if pages.len() > 0 {
-            if album.artist.is_some() {
-                let artist_name = String::from(album.artist.clone().unwrap());
-                let cached_artist = artists.iter().find(|artist| artist.name == artist_name);
-                if cached_artist.is_none() {
-                    let persisted_artist =
-                        sqlx::query_as::<_, Artist>("SELECT * FROM artist WHERE name=?")
-                            .bind(&artist_name)
-                            .fetch_one(pool)
-                            .await;
-
-                    if persisted_artist.is_err() {
-                        // for some reason sqlx does not allow to return multiple columns yet.
-                        let (new_artist_id,) = sqlx::query_as::<_, (i32,)>(
-                            "INSERT INTO artist(name) VALUES(?) RETURNING id",
-                        )
+        if album.artist.is_some() {
+            let artist_name = String::from(album.artist.clone().unwrap());
+            let cached_artist = artists.iter().find(|artist| artist.name == artist_name);
+            if cached_artist.is_none() {
+                let persisted_artist =
+                    sqlx::query_as::<_, Artist>("SELECT * FROM artist WHERE name=?")
                         .bind(&artist_name)
                         .fetch_one(pool)
-                        .await
-                        .unwrap();
+                        .await;
 
-                        let new_artist = Artist {
-                            id: new_artist_id,
-                            name: String::from(artist_name),
-                        };
-                        artist_id = Some(new_artist.id);
-                        artists.push(new_artist);
-                    } else {
-                        let artist = persisted_artist.ok().unwrap();
-                        artist_id = Some(artist.id);
-                        artists.push(artist);
-                    }
+                if persisted_artist.is_err() {
+                    // for some reason sqlx does not allow to return multiple columns yet.
+                    let (new_artist_id,) = sqlx::query_as::<_, (i32,)>(
+                        "INSERT INTO artist(name) VALUES(?) RETURNING id",
+                    )
+                    .bind(&artist_name)
+                    .fetch_one(pool)
+                    .await
+                    .unwrap();
+
+                    let new_artist = Artist {
+                        id: new_artist_id,
+                        name: String::from(artist_name),
+                    };
+                    artist_id = Some(new_artist.id);
+                    artists.push(new_artist);
                 } else {
-                    artist_id = Some(cached_artist.unwrap().id);
+                    let artist = persisted_artist.ok().unwrap();
+                    artist_id = Some(artist.id);
+                    artists.push(artist);
                 }
+            } else {
+                artist_id = Some(cached_artist.unwrap().id);
             }
+        }
 
-            let (persisted_album_id,) = sqlx::query_as::<_, (i32,)>(
-                "INSERT INTO album(name, full_name, pages, artist_id) VALUES(?, ?, ?, ?) RETURNING id",
-            )
-            .bind(album.name)
-            .bind(album.full_name)
-            .bind(pages.len() as i32)
-            .bind(artist_id)
-            .fetch_one(pool)
-            .await
-            .unwrap();
+        let (persisted_album_id,) = sqlx::query_as::<_, (i32,)>(
+            "INSERT INTO album(name, full_name, pages, artist_id) VALUES(?, ?, ?, ?) RETURNING id",
+        )
+        .bind(album.name)
+        .bind(album.full_name)
+        .bind(album.pages)
+        .bind(artist_id)
+        .fetch_one(pool)
+        .await
+        .unwrap();
 
-            if album.series.is_some() && album.chapter_number.is_some() {
-                let series_id: Option<i32>;
-                let series_name = album.series.clone().unwrap();
-                let cached_series = series
-                    .iter()
-                    .find(|collection| collection.name == *series_name);
+        if album.series.is_some() {
+            let series_id: Option<i32>;
+            let series_name = album.series.clone().unwrap();
+            let cached_series = series
+                .iter()
+                .find(|collection| collection.name == *series_name);
 
-                if cached_series.is_none() {
-                    let persisted_series =
-                        sqlx::query_as::<_, Series>("SELECT * FROM series WHERE name=?")
-                            .bind(&series_name)
-                            .fetch_one(pool)
-                            .await;
-
-                    if persisted_series.is_err() {
-                        let (new_series_id,) = sqlx::query_as::<_, (i32,)>(
-                            "INSERT INTO series(name) VALUES(?) RETURNING id",
-                        )
+            if cached_series.is_none() {
+                let persisted_series =
+                    sqlx::query_as::<_, Series>("SELECT * FROM series WHERE name=?")
                         .bind(&series_name)
                         .fetch_one(pool)
-                        .await
-                        .unwrap();
+                        .await;
 
-                        series.push(Series {
-                            id: new_series_id,
-                            name: String::from(series_name),
-                        });
-                        series_id = Some(new_series_id);
-                    } else {
-                        let collection = persisted_series.unwrap();
-                        series_id = Some(collection.id);
-                        series.push(collection);
-                    }
+                if persisted_series.is_err() {
+                    let (new_series_id,) = sqlx::query_as::<_, (i32,)>(
+                        "INSERT INTO series(name) VALUES(?) RETURNING id",
+                    )
+                    .bind(&series_name)
+                    .fetch_one(pool)
+                    .await
+                    .unwrap();
+
+                    series.push(Series {
+                        id: new_series_id,
+                        name: String::from(series_name),
+                    });
+                    series_id = Some(new_series_id);
                 } else {
-                    series_id = Some(cached_series.unwrap().id);
+                    let collection = persisted_series.unwrap();
+                    series_id = Some(collection.id);
+                    series.push(collection);
                 }
+            } else {
+                series_id = Some(cached_series.unwrap().id);
+            }
+
+            let mut chapter_number = 1;
+            if album.chapter_number.is_some() {
+                chapter_number = album.chapter_number.unwrap();
+            }
+
+            let res = sqlx::query(
+                "INSERT INTO album_series(series_id, album_id, chapter_number) VALUES(?, ?, ?)",
+            )
+            .bind(series_id)
+            .bind(persisted_album_id)
+            .bind(chapter_number)
+            .execute(pool)
+            .await;
+
+            if res.is_err() {
+                let (amount_of_chapters,) = sqlx::query_as::<_, (i32,)>(
+                    "SELECT COUNT(*) FROM album_series WHERE series_id=?",
+                )
+                .bind(series_id)
+                .fetch_one(pool)
+                .await
+                .expect("there was an error");
 
                 sqlx::query(
                     "INSERT INTO album_series(series_id, album_id, chapter_number) VALUES(?, ?, ?)",
                 )
                 .bind(series_id)
                 .bind(persisted_album_id)
-                .bind(album.chapter_number.unwrap())
+                .bind(amount_of_chapters + 1)
                 .execute(pool)
                 .await
                 .expect("there was an error");
@@ -170,6 +186,7 @@ async fn scan_albums(
 struct AlbumWithMetadata {
     name: String,
     full_name: String,
+    pages: i32,
     artist: Option<String>,
     series: Option<String>,
     chapter_number: Option<i32>,
@@ -186,17 +203,26 @@ fn get_albums_with_metadata(
             .split_once(format!("{}/", root_folder).as_str())
             .unwrap();
 
-        let mut album_with_metadata = AlbumWithMetadata {
-            name: String::from(name),
-            full_name: full_name.to_string(),
-            artist: None,
-            series: None,
-            chapter_number: None,
-        };
-        add_metadata(&full_name.to_string(), &mut album_with_metadata);
+        let pages = get_files(&folder_path)
+            .into_iter()
+            .filter(|file| file.contains(".jpg") || file.contains(".jpeg") || file.contains(".png"))
+            .collect::<Vec<String>>();
 
-        albums_with_metadata.push(album_with_metadata);
+        if pages.len() > 0 {
+            let mut album_with_metadata = AlbumWithMetadata {
+                name: String::from(name),
+                full_name: full_name.to_string(),
+                pages: pages.len() as i32,
+                artist: None,
+                series: None,
+                chapter_number: None,
+            };
+            add_metadata(&full_name.to_string(), &mut album_with_metadata);
+
+            albums_with_metadata.push(album_with_metadata);
+        }
     }
+
     return albums_with_metadata;
 }
 
