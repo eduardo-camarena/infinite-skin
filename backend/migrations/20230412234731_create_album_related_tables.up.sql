@@ -14,7 +14,8 @@ CREATE TABLE album(
 );
 
 CREATE TABLE album_series(
-  album_id INT AUTO_INCREMENT PRIMARY KEY,
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  album_id INT,
   series_id INT,
   chapter_number TINYINT,
   FOREIGN KEY (album_id) REFERENCES album(id) ON DELETE NO ACTION ON UPDATE NO ACTION,

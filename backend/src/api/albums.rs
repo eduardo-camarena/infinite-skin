@@ -1,3 +1,5 @@
+use std::fs::read_dir;
+
 use actix_web::{
     get,
     web::{Data, Json, Path},
@@ -5,7 +7,6 @@ use actix_web::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx;
-use walkdir::WalkDir;
 
 use crate::{database::entities::album_entity::Album, AppData};
 
@@ -66,47 +67,24 @@ pub async fn get_file(
     let pool = &app_data.pool;
     let (album_id, image_id) = path.into_inner();
 
-    let album =
-        sqlx::query_as::<_, (String, String)>("SELECT name, full_name FROM album WHERE id=?")
-            .bind(album_id)
-            .fetch_one(pool)
-            .await;
+    let full_name = sqlx::query_as::<_, (String,)>("SELECT full_name FROM album WHERE id=?")
+        .bind(album_id)
+        .fetch_one(pool)
+        .await;
 
-    if album.is_err() {
+    if full_name.is_err() {
         return Err(ServerError::ValidationError {
             field: String::from("album_id"),
         });
     }
 
-    let (name, full_name) = album.unwrap();
-    let file_location = format!("{}/images/{}", app_data.config.media_folder, full_name);
-
-    // let mut file_path = std::path::PathBuf::from(file_location);
-    // let mut file = actix_files::NamedFile::open_async(&file_path).await;
-    //
-    // // TODO: find a better way to match different extensions that isn't a loop
-    // if file.is_ok() {
-    //     println!("{}", file_path.to_string_lossy());
-    //     return Ok(file.unwrap().into_response(&req));
-    // }
-    //
-    // file_path.set_extension("jpeg");
-    // file = actix_files::NamedFile::open_async(&file_path).await;
-    //
-    // if file.is_ok() {
-    //     println!("{}", file_path.to_string_lossy());
-    //     return Ok(file.unwrap().into_response(&req));
-    // }
-    //
-    // file_path.set_extension("png");
-    // println!("{:?}", file_path);
-    let file_path = format!(
-        "{}/{}",
-        &file_location,
-        get_album_images(&file_location)[(image_id - 1) as usize]
+    let file_location = format!(
+        "{}/images/{}",
+        app_data.config.media_folder,
+        full_name.unwrap().0
     );
-    println!("{}", file_path);
-    let file = actix_files::NamedFile::open_async(&file_path).await;
+    let album_images = get_album_images(&file_location);
+    let file = actix_files::NamedFile::open_async(&album_images[(image_id - 1) as usize]).await;
 
     if file.is_ok() {
         return Ok(file.unwrap().into_response(&req));
@@ -116,16 +94,12 @@ pub async fn get_file(
 }
 
 fn get_album_images(folder: &String) -> Vec<String> {
-    let files = WalkDir::new(folder)
+    return read_dir(folder)
+        .unwrap()
         .into_iter()
-        .map(|file| file.ok())
-        .filter(|file| file.is_some())
-        .map(|file| file.unwrap())
-        .filter(|file| file.metadata().unwrap().is_file())
-        .map(|folder| String::from(folder.file_name().to_str().unwrap()))
-        .collect::<Vec<String>>();
-
-    return files;
+        .filter(|file| file.as_ref().unwrap().metadata().unwrap().is_file())
+        .map(|file| file.unwrap().path().into_os_string().into_string().unwrap())
+        .collect();
 }
 
 #[get("/{album_id}")]

@@ -42,7 +42,7 @@ const CreateUser: Component<CreateUserProps> = ({ isAdmin = false }) => {
   };
 
   return (
-    <form class="flex flex-col pt-4 px-8 lg:px-[35%]" onSubmit={onSubmit}>
+    <form class="flex flex-col pt-6 px-8 lg:px-[35%]" onSubmit={onSubmit}>
       <div class="pb-4">
         <TextInput
           label="Nombre de usuario"

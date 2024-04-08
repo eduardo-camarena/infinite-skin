@@ -19,15 +19,15 @@ type UserStore = {
   loading: 'idle' | 'pending';
   user: User | null;
 } & (
-    | {
+  | {
       token: null;
       decodedToken: null;
     }
-    | {
+  | {
       token: string;
       decodedToken: DecodedToken;
     }
-  );
+);
 
 export const [authStore, setAuthStore] = createStore<UserStore>({
   loading: 'idle',

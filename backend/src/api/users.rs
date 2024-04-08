@@ -34,13 +34,6 @@ pub async fn new_user(app_data: Data<AppData>, payload: Json<NewUserPayload>) ->
         return Err(ServerError::InternalError);
     }
 
-    println!(
-        "{} {} {}",
-        payload.username,
-        hashed_password.as_ref().unwrap(),
-        payload.role
-    );
-
     let new_user = sqlx::query_as::<_, (i32, String, String)>(
         "INSERT INTO user(username, password, role) VALUES(?, ?, ?) RETURNING id, username, role",
     )

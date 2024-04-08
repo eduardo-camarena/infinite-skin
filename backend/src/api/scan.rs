@@ -21,7 +21,7 @@ struct AlbumName {
 pub async fn scan_media_folder(app_data: Data<AppData>) -> impl Responder {
     let pool = &app_data.pool;
 
-    let albums = scan_albums(format!("{}/images2", &app_data.config.media_folder), pool).await;
+    let albums = scan_albums(format!("{}/images", &app_data.config.media_folder), pool).await;
 
     return albums;
 }
@@ -33,8 +33,7 @@ async fn scan_albums(
     let folders = get_folders(&media_folder);
     let albums = get_albums_with_metadata(folders, &media_folder);
 
-    let mut query_builder: sqlx::QueryBuilder<MySql> =
-        sqlx::QueryBuilder::new("WITH t(a) AS (VALUES(");
+    let mut query_builder = sqlx::QueryBuilder::<MySql>::new("WITH t(a) AS (VALUES(");
 
     let mut separated = query_builder.separated("), (");
     for album in albums.iter() {
@@ -42,8 +41,10 @@ async fn scan_albums(
     }
 
     separated.push_unseparated(")) SELECT t.a FROM t WHERE t.a NOT IN(SELECT name FROM album)");
-    let query = query_builder.build_query_as::<AlbumName>();
-    let missing_albums = query.fetch_all(pool).await;
+    let missing_albums = query_builder
+        .build_query_as::<AlbumName>()
+        .fetch_all(pool)
+        .await;
 
     if missing_albums.is_err() {
         return Err(ServerError::InternalError);
@@ -100,7 +101,7 @@ async fn scan_albums(
         )
         .bind(album.name)
         .bind(album.full_name)
-        .bind(album.pages)
+        .bind(album.pages.len() as i32)
         .bind(artist_id)
         .fetch_one(pool)
         .await
@@ -186,7 +187,7 @@ async fn scan_albums(
 struct AlbumWithMetadata {
     name: String,
     full_name: String,
-    pages: i32,
+    pages: Vec<String>,
     artist: Option<String>,
     series: Option<String>,
     chapter_number: Option<i32>,
@@ -212,7 +213,7 @@ fn get_albums_with_metadata(
             let mut album_with_metadata = AlbumWithMetadata {
                 name: String::from(name),
                 full_name: full_name.to_string(),
-                pages: pages.len() as i32,
+                pages,
                 artist: None,
                 series: None,
                 chapter_number: None,
