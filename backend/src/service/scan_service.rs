@@ -1,15 +1,12 @@
-use actix_web::{post, web::Data, HttpResponse, Responder};
 use serde::Serialize;
 use sqlx::prelude::FromRow;
-use sqlx::{self, MySql, Pool};
+use sqlx::{self, MySql};
 use std::fs::read_dir;
 use walkdir::WalkDir;
 
-use crate::api::errors::server_error::ServerError;
-use crate::{
-    database::entities::{artist_entity::Artist, series_entity::Series},
-    AppData,
-};
+use crate::database::entities::{artist_entity::Artist, series_entity::Series};
+use crate::service::errors::server_error::ServerError;
+use crate::Context;
 
 #[derive(Serialize, FromRow, PartialEq, Debug)]
 struct AlbumName {
@@ -17,21 +14,9 @@ struct AlbumName {
 }
 
 // tech debt: re-scan existing folders for new files
-#[post("/scan")]
-pub async fn scan_media_folder(app_data: Data<AppData>) -> impl Responder {
-    let pool = &app_data.pool;
-
-    let albums = scan_albums(format!("{}/images", &app_data.config.media_folder), pool).await;
-
-    return albums;
-}
-
-async fn scan_albums(
-    media_folder: String,
-    pool: &Pool<MySql>,
-) -> Result<HttpResponse, ServerError> {
-    let folders = get_folders(&media_folder);
-    let albums = get_albums_with_metadata(folders, &media_folder);
+pub async fn scan_albums(ctx: &Context) -> Result<(), ServerError> {
+    let folders = get_folders(&ctx.config.media_folder);
+    let albums = get_albums_with_metadata(folders, &ctx.config.media_folder);
 
     let mut query_builder = sqlx::QueryBuilder::<MySql>::new("WITH t(a) AS (VALUES(");
 
@@ -43,7 +28,7 @@ async fn scan_albums(
     separated.push_unseparated(")) SELECT t.a FROM t WHERE t.a NOT IN(SELECT name FROM album)");
     let missing_albums = query_builder
         .build_query_as::<AlbumName>()
-        .fetch_all(pool)
+        .fetch_all(&ctx.pool)
         .await;
 
     if missing_albums.is_err() {
@@ -67,7 +52,7 @@ async fn scan_albums(
                 let persisted_artist =
                     sqlx::query_as::<_, Artist>("SELECT * FROM artist WHERE name=?")
                         .bind(&artist_name)
-                        .fetch_one(pool)
+                        .fetch_one(&ctx.pool)
                         .await;
 
                 if persisted_artist.is_err() {
@@ -76,7 +61,7 @@ async fn scan_albums(
                         "INSERT INTO artist(name) VALUES(?) RETURNING id",
                     )
                     .bind(&artist_name)
-                    .fetch_one(pool)
+                    .fetch_one(&ctx.pool)
                     .await
                     .unwrap();
 
@@ -103,7 +88,7 @@ async fn scan_albums(
         .bind(album.full_name)
         .bind(album.pages.len() as i32)
         .bind(artist_id)
-        .fetch_one(pool)
+        .fetch_one(&ctx.pool)
         .await
         .unwrap();
 
@@ -118,7 +103,7 @@ async fn scan_albums(
                 let persisted_series =
                     sqlx::query_as::<_, Series>("SELECT * FROM series WHERE name=?")
                         .bind(&series_name)
-                        .fetch_one(pool)
+                        .fetch_one(&ctx.pool)
                         .await;
 
                 if persisted_series.is_err() {
@@ -126,7 +111,7 @@ async fn scan_albums(
                         "INSERT INTO series(name) VALUES(?) RETURNING id",
                     )
                     .bind(&series_name)
-                    .fetch_one(pool)
+                    .fetch_one(&ctx.pool)
                     .await
                     .unwrap();
 
@@ -155,7 +140,7 @@ async fn scan_albums(
             .bind(series_id)
             .bind(persisted_album_id)
             .bind(chapter_number)
-            .execute(pool)
+            .execute(&ctx.pool)
             .await;
 
             if res.is_err() {
@@ -163,7 +148,7 @@ async fn scan_albums(
                     "SELECT COUNT(*) FROM album_series WHERE series_id=?",
                 )
                 .bind(series_id)
-                .fetch_one(pool)
+                .fetch_one(&ctx.pool)
                 .await
                 .expect("there was an error");
 
@@ -173,14 +158,14 @@ async fn scan_albums(
                 .bind(series_id)
                 .bind(persisted_album_id)
                 .bind(amount_of_chapters + 1)
-                .execute(pool)
+                .execute(&ctx.pool)
                 .await
                 .expect("there was an error");
             }
         }
     }
 
-    return Ok(HttpResponse::Ok().into());
+    return Ok(());
 }
 
 #[derive(Debug)]

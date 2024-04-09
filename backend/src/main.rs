@@ -1,16 +1,22 @@
-mod api;
 mod database;
+mod interface;
+mod service;
 mod utils;
 
 use std::env;
 
-use crate::api::{albums, health_checker, scan, users};
 use crate::database::db::establish_connection;
+use crate::interface::http::{
+    albums_controller::albums_controller, scan_controller::scan_controller,
+    users_controller::users_controller,
+};
 use crate::utils::config::{get_config, Config};
 
 use actix_cors::Cors;
+use actix_web::web::Data;
 use actix_web::{middleware, web, App, HttpServer};
 use dotenvy::dotenv;
+use interface::http::health_check_controller::health_check_controller;
 use sqlx::mysql::MySqlPool;
 
 #[derive(Clone)]
@@ -18,6 +24,8 @@ pub struct AppData {
     pool: MySqlPool,
     config: Config,
 }
+
+pub type Context = Data<AppData>;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -30,6 +38,7 @@ async fn main() -> std::io::Result<()> {
         pool,
         config: get_config(),
     };
+
     HttpServer::new(move || {
         // this cors policy is obvously bad, but since this is only going to
         // run a local network I don't really care to set up a proper cors policy.
@@ -38,29 +47,17 @@ async fn main() -> std::io::Result<()> {
             .allow_any_header()
             .allow_any_method()
             .supports_credentials();
+
         let logger = middleware::Logger::default();
 
         App::new()
             .wrap(cors)
             .wrap(logger)
             .app_data(web::Data::new(app_data.clone()))
-            .service(health_checker::health_check)
-            .service(scan::scan_media_folder)
-            .service(
-                web::scope("/users")
-                    .service(users::login)
-                    .service(users::get_user)
-                    .service(users::get_users)
-                    .service(users::user_uses_password)
-                    .service(users::new_user),
-            )
-            .service(
-                web::scope("/albums")
-                    .service(albums::last_page_number)
-                    .service(albums::get_file)
-                    .service(albums::get_albums)
-                    .service(albums::get_album_info),
-            )
+            .service(health_check_controller())
+            .service(scan_controller())
+            .service(users_controller())
+            .service(albums_controller())
     })
     .bind((
         "localhost",

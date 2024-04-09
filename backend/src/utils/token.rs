@@ -5,7 +5,7 @@ use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, 
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
-pub struct Claims {
+pub struct Authorization {
     pub sub: i32,
     iat: i64,
     exp: i64,
@@ -17,7 +17,7 @@ pub fn create_token(sub: i32, jwt_secret: &String) -> Result<String, StatusCode>
     let exp = iat + chrono::Duration::weeks(52).num_seconds();
     return match encode(
         &Header::default(),
-        &Claims { sub, iat, exp },
+        &Authorization { sub, iat, exp },
         &EncodingKey::from_secret(jwt_secret.as_bytes()),
     ) {
         Ok(jwt) => Ok(jwt),
@@ -25,7 +25,7 @@ pub fn create_token(sub: i32, jwt_secret: &String) -> Result<String, StatusCode>
     };
 }
 
-pub fn get_authorization(request: &HttpRequest) -> Result<Claims, StatusCode> {
+pub fn get_authorization(request: &HttpRequest) -> Result<Authorization, StatusCode> {
     let jwt_secret = env::var("JWT_SECRET").unwrap();
     let auth = request.headers().get("Authorization");
 
@@ -40,7 +40,7 @@ pub fn get_authorization(request: &HttpRequest) -> Result<Claims, StatusCode> {
         .unwrap()
         .replace("Bearer ", "");
 
-    return match decode::<Claims>(
+    return match decode::<Authorization>(
         &token,
         &DecodingKey::from_secret(jwt_secret.as_ref()),
         &Validation::new(Algorithm::HS256),
