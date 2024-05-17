@@ -1,3 +1,4 @@
+#![allow(clippy::needless_return)]
 mod database;
 mod interface;
 mod service;

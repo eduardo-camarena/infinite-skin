@@ -7,7 +7,7 @@ pub fn scan_controller() -> actix_web::Scope {
 
 #[post("")]
 async fn scan_media_folder(ctx: Context) -> impl Responder {
-    let albums = scan_service::scan_albums(&ctx).await;
+    let albums = scan_service::scan(&ctx).await;
 
     return match albums {
         Ok(_) => Ok(HttpResponse::Ok()),

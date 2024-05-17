@@ -14,9 +14,24 @@ struct AlbumName {
 }
 
 // tech debt: re-scan existing folders for new files
+pub async fn scan(ctx: &Context) -> Result<(), ServerError> {
+    scan_albums(ctx).await?;
+    scan_videos(ctx).await?;
+
+    return Ok(());
+}
+
+pub async fn scan_videos(ctx: &Context) -> Result<(), ServerError> {
+    let media_folder = format!("{}/videos", &ctx.config.media_folder);
+    get_folders(&media_folder);
+
+    return Ok(());
+}
+
 pub async fn scan_albums(ctx: &Context) -> Result<(), ServerError> {
-    let folders = get_folders(&ctx.config.media_folder);
-    let albums = get_albums_with_metadata(folders, &ctx.config.media_folder);
+    let media_folder = format!("{}/images", &ctx.config.media_folder);
+    let folders = get_folders(&media_folder);
+    let albums = get_albums_with_metadata(folders, &media_folder);
 
     let mut query_builder = sqlx::QueryBuilder::<MySql>::new("WITH t(a) AS (VALUES(");
 
@@ -46,7 +61,7 @@ pub async fn scan_albums(ctx: &Context) -> Result<(), ServerError> {
     for album in albums_to_persist {
         let mut artist_id: Option<i32> = None;
         if album.artist.is_some() {
-            let artist_name = String::from(album.artist.clone().unwrap());
+            let artist_name = album.artist.clone().unwrap();
             let cached_artist = artists.iter().find(|artist| artist.name == artist_name);
             if cached_artist.is_none() {
                 let persisted_artist =
@@ -67,7 +82,7 @@ pub async fn scan_albums(ctx: &Context) -> Result<(), ServerError> {
 
                     let new_artist = Artist {
                         id: new_artist_id,
-                        name: String::from(artist_name),
+                        name: artist_name,
                     };
                     artist_id = Some(new_artist.id);
                     artists.push(new_artist);
@@ -117,7 +132,7 @@ pub async fn scan_albums(ctx: &Context) -> Result<(), ServerError> {
 
                     series.push(Series {
                         id: new_series_id,
-                        name: String::from(series_name),
+                        name: series_name,
                     });
                     series_id = Some(new_series_id);
                 } else {
@@ -178,23 +193,20 @@ struct AlbumWithMetadata {
     chapter_number: Option<i32>,
 }
 
-fn get_albums_with_metadata(
-    folders: Vec<[String; 2]>,
-    root_folder: &String,
-) -> Vec<AlbumWithMetadata> {
+fn get_albums_with_metadata(folders: Vec<String>, root_folder: &String) -> Vec<AlbumWithMetadata> {
     let mut albums_with_metadata: Vec<AlbumWithMetadata> = vec![];
-    for [folder_path, folder] in folders {
-        let (name, _) = folder.split_once(" [").unwrap_or((&folder, ""));
+    for folder_path in folders {
         let (_, full_name) = folder_path
             .split_once(format!("{}/", root_folder).as_str())
             .unwrap();
+        let (name, _) = full_name.split_once(" [").unwrap_or((full_name, ""));
 
         let pages = get_files(&folder_path)
             .into_iter()
             .filter(|file| file.contains(".jpg") || file.contains(".jpeg") || file.contains(".png"))
             .collect::<Vec<String>>();
 
-        if pages.len() > 0 {
+        if !pages.is_empty() {
             let mut album_with_metadata = AlbumWithMetadata {
                 name: String::from(name),
                 full_name: full_name.to_string(),
@@ -203,7 +215,7 @@ fn get_albums_with_metadata(
                 series: None,
                 chapter_number: None,
             };
-            add_metadata(&full_name.to_string(), &mut album_with_metadata);
+            add_metadata(full_name, &mut album_with_metadata);
 
             albums_with_metadata.push(album_with_metadata);
         }
@@ -212,17 +224,17 @@ fn get_albums_with_metadata(
     return albums_with_metadata;
 }
 
-fn add_metadata(folder_path: &String, album_metadata: &mut AlbumWithMetadata) {
-    for folder in folder_path.split("/") {
-        let (_, metadata) = folder.split_once("[").unwrap_or((&folder, ""));
-        if metadata.len() > 0 {
+fn add_metadata(folder_path: &str, album_metadata: &mut AlbumWithMetadata) {
+    for folder in folder_path.split('/') {
+        let (_, metadata) = folder.split_once('[').unwrap_or((folder, ""));
+        if !metadata.is_empty() {
             for item in metadata[..metadata.len() - 1].split(", ") {
                 if item.contains("artist") {
-                    album_metadata.artist = Some(String::from(item.split_once("=").unwrap().1));
+                    album_metadata.artist = Some(String::from(item.split_once('=').unwrap().1));
                 } else if item.contains("series") {
-                    album_metadata.series = Some(String::from(item.split_once("=").unwrap().1));
+                    album_metadata.series = Some(String::from(item.split_once('=').unwrap().1));
                 } else if item.contains("chapter_number") {
-                    let chapter = String::from(item.split_once("=").unwrap().1).parse::<i32>();
+                    let chapter = String::from(item.split_once('=').unwrap().1).parse::<i32>();
                     if chapter.is_ok() {
                         album_metadata.chapter_number = Some(chapter.unwrap());
                     }
@@ -232,29 +244,19 @@ fn add_metadata(folder_path: &String, album_metadata: &mut AlbumWithMetadata) {
     }
 }
 
-fn get_folders(root_folder: &String) -> Vec<[String; 2]> {
-    let folders = WalkDir::new(root_folder)
+fn get_folders(root_folder: &String) -> Vec<String> {
+    return WalkDir::new(root_folder)
         .into_iter()
-        .map(|file| file.ok())
-        .filter(|file| file.is_some())
-        .map(|file| file.unwrap())
+        .filter_map(|file| file.ok())
         .filter(|file| file.metadata().unwrap().is_dir())
         .filter(|folder| folder.path().to_str().unwrap() != root_folder)
-        .map(|folder| {
-            return [
-                String::from(folder.path().to_str().unwrap()),
-                String::from(folder.file_name().to_str().unwrap()),
-            ];
-        })
-        .collect::<Vec<[String; 2]>>();
-
-    return folders;
+        .map(|folder| folder.path().to_string_lossy().to_string())
+        .collect();
 }
 
 fn get_files(folder_path: &String) -> Vec<String> {
     return read_dir(folder_path)
         .unwrap()
-        .into_iter()
         .filter(|file| file.as_ref().unwrap().metadata().unwrap().is_file())
         .map(|file| file.unwrap().path().into_os_string().into_string().unwrap())
         .collect();

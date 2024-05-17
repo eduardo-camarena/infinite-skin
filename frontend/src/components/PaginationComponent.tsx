@@ -5,7 +5,7 @@ import Button from '../InputComponents/Button';
 
 type PaginatorProps = {
   lastPage: number;
-  getNewPage: ({}) => Promise<string>;
+  getNewPage: (newPage: number) => Promise<void>;
 };
 
 const Paginator: Component<PaginatorProps> = ({ lastPage, getNewPage }) => {
@@ -14,11 +14,11 @@ const Paginator: Component<PaginatorProps> = ({ lastPage, getNewPage }) => {
   if (!searchParams.page) {
     setSearchParams({ page: 1 });
   }
-
   createResource(
     () => (searchParams.page ? Number.parseInt(searchParams.page) : 1),
     getNewPage
   );
+
   return (
     <div class="pt-6 flex justify-center gap-2">
       <Button

@@ -4,7 +4,7 @@
     "es2021": true
   },
   "extends": [
-    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
@@ -19,9 +19,15 @@
   ],
   "overrides": [
     {
-      "files": ["**/*.ts", "**/*.tsx"],
+      "files": [
+        "**/*.ts",
+        "**/*.tsx"
+      ],
       "parser": "@typescript-eslint/parser",
-      "plugins": ["@typescript-eslint", "import"],
+      "plugins": [
+        "@typescript-eslint",
+        "import"
+      ],
       "rules": {
         "@typescript-eslint/explicit-function-return-type": [
           "error",
@@ -30,24 +36,32 @@
             "allowTypedFunctionExpressions": true,
             "allowHigherOrderFunctions": true
           }
-          ],
-          "@typescript-eslint/explicit-member-accessibility": [
-            "error",
-          { "accessibility": "no-public" }
-          ],
-        "@typescript-eslint/no-unused-vars": ["error"],
-        "@typescript-eslint/no-explicit-any": ["error"],
+        ],
+        "@typescript-eslint/explicit-member-accessibility": [
+          "error",
+          {
+            "accessibility": "no-public"
+          }
+        ],
+        "@typescript-eslint/no-unused-vars": "error",
+        "@typescript-eslint/no-explicit-any": "error",
         "@typescript-eslint/naming-convention": [
           "error",
           {
             "selector": "typeLike",
-            "format": ["PascalCase"]
+            "format": [
+              "PascalCase"
+            ]
           }
         ],
         "import/order": [
           "error",
           {
-            "groups": ["builtin", "external", "internal"],
+            "groups": [
+              "builtin",
+              "external",
+              "internal"
+            ],
             "newlines-between": "always",
             "alphabetize": {
               "order": "asc",

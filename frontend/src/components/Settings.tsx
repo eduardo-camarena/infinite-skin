@@ -1,9 +1,9 @@
-import { Component, Show } from 'solid-js';
+import { Component, createResource, Show } from 'solid-js';
 
 import Loading from './Loading';
 import Button from '../InputComponents/Button';
 import { authStore } from '../stores/authStore';
-import { httpClient } from '../utils/httpClient';
+import { scan, settingsStore } from '../stores/settingsStore';
 
 const Settings: Component = () => {
   return (
@@ -14,12 +14,19 @@ const Settings: Component = () => {
       >
         <Show when={authStore.user?.role}>
           <Button
-            text="Scan"
+            text={
+              <Show
+                when={settingsStore.loading === 'idle'}
+                fallback={
+                  <Loading margin="ml-[calc(50%-1rem)] mt-[calc(50%-1rem)]" />
+                }
+              >
+                <p>Scan</p>
+              </Show>
+            }
             variant="blue"
-            onClick={() => {
-              httpClient.post('/scan').then((response) => {
-                console.log(response.status);
-              });
+            onClick={async () => {
+              await scan();
             }}
           />
         </Show>
