@@ -1,11 +1,13 @@
-use crate::utils::token::Authorization;
 use crate::Context;
-use crate::{database::entities::user_entity::User, utils::token::create_token};
+use crate::{
+    database::models::user_model::{MainPageUser, UsesPasswordUser},
+    utils::token::{create_token, Authorization},
+};
 
 use bcrypt;
-use serde::{Deserialize, Serialize};
-use sqlx;
-use sqlx::FromRow;
+use entity::prelude::User;
+use sea_orm::{EntityTrait, Set};
+use serde::Serialize;
 
 use crate::service::errors::server_error::ServerError;
 
@@ -16,51 +18,46 @@ pub async fn new_user(
     role: &String,
 ) -> Result<LoginResponse, ServerError> {
     let config = &ctx.config;
-    let conn = &ctx.pool;
     let hashed_password = hash_password(password);
 
     if hashed_password.is_err() {
         return Err(ServerError::InternalError);
     }
 
-    let new_user = sqlx::query_as::<_, (i32, String, String)>(
-        "INSERT INTO user(username, password, role) VALUES(?, ?, ?) RETURNING id, username, role",
-    )
-    .bind(username)
-    .bind(hashed_password.as_ref().unwrap())
-    .bind(role)
-    .fetch_one(conn)
-    .await;
+    let res = User::insert(entity::user::ActiveModel {
+        username: Set(String::from(username)),
+        password: Set(String::from(password)),
+        role: Set(String::from(role)),
+        ..Default::default()
+    })
+    .exec(&ctx.db)
+    .await
+    .map_err(|_| ServerError::InternalError)?;
 
-    if new_user.is_err() {
-        return Err(ServerError::InternalError);
-    }
+    let new_user = User::find_by_id(res.last_insert_id)
+        .one(&ctx.db)
+        .await
+        .map_err(|_| ServerError::InternalError)?
+        .unwrap();
 
-    let (id, username, role) = new_user.unwrap();
-    let token = create_token(id, &config.jwt_secret);
+    let token = create_token(new_user.id, &config.jwt_secret);
 
     if token.is_err() {
         return Err(ServerError::InternalError);
     }
 
     return Ok(LoginResponse {
-        id,
-        username,
-        role,
+        id: new_user.id,
+        username: new_user.username,
+        role: new_user.role,
         token: token.unwrap(),
     });
 }
 
-#[derive(Serialize, Deserialize, FromRow)]
-pub struct MainPageUser {
-    id: i32,
-    username: String,
-    uses_password: i8,
-}
-
 pub async fn get_users(ctx: &Context) -> Result<Vec<MainPageUser>, ServerError> {
-    let users = sqlx::query_as!(MainPageUser, "SELECT id, username, uses_password FROM user")
-        .fetch_all(&ctx.pool)
+    let users = User::find()
+        .into_partial_model::<MainPageUser>()
+        .all(&ctx.db)
         .await;
 
     return match users {
@@ -69,32 +66,23 @@ pub async fn get_users(ctx: &Context) -> Result<Vec<MainPageUser>, ServerError> 
     };
 }
 
-#[derive(Serialize)]
-pub struct UsesPasswordReponse {
-    uses_password: i8,
-}
-
 pub async fn user_uses_password(
     ctx: &Context,
     user_id: i32,
-) -> Result<UsesPasswordReponse, ServerError> {
-    let res = sqlx::query_as!(
-        UsesPasswordReponse,
-        "SELECT uses_password FROM user WHERE id = ?",
-        &user_id
-    )
-    .fetch_one(&ctx.pool)
-    .await;
+) -> Result<UsesPasswordUser, ServerError> {
+    let res = User::find_by_id(user_id)
+        .into_partial_model::<UsesPasswordUser>()
+        .one(&ctx.db)
+        .await
+        .map_err(|_| ServerError::InternalError)?;
 
     return match res {
-        Err(_) => Err(ServerError::NotFound),
-        Ok(user) => Ok(UsesPasswordReponse {
-            uses_password: user.uses_password,
-        }),
+        None => Err(ServerError::NotFound),
+        Some(user) => Ok(user),
     };
 }
 
-#[derive(Serialize, FromRow)]
+#[derive(Serialize)]
 pub struct LoginResponse {
     id: i32,
     username: String,
@@ -108,13 +96,13 @@ pub async fn login(
     password: Option<&String>,
 ) -> Result<LoginResponse, ServerError> {
     let config = &ctx.config;
-    let conn = &ctx.pool;
 
-    let res = sqlx::query_as!(User, "SELECT * FROM user WHERE id=?", user_id)
-        .fetch_one(conn)
-        .await;
+    let res = User::find_by_id(user_id)
+        .one(&ctx.db)
+        .await
+        .map_err(|_| ServerError::InternalError)?;
 
-    if res.is_err() {
+    if res.is_none() {
         return Err(ServerError::NotFound);
     }
 
@@ -145,25 +133,16 @@ pub async fn login(
     });
 }
 
-#[derive(Serialize, FromRow)]
-pub struct ViewableUser {
-    id: i32,
-    username: String,
-    role: String,
-}
-
-pub async fn get_user(auth: &Authorization, ctx: &Context) -> Result<ViewableUser, ServerError> {
-    let user = sqlx::query_as!(
-        ViewableUser,
-        "SELECT id, username, role FROM user WHERE id=?",
-        auth.sub
-    )
-    .fetch_one(&ctx.pool)
-    .await;
+pub async fn get_user(auth: &Authorization, ctx: &Context) -> Result<MainPageUser, ServerError> {
+    let user = User::find_by_id(auth.sub)
+        .into_partial_model::<MainPageUser>()
+        .one(&ctx.db)
+        .await
+        .map_err(|_| ServerError::InternalError)?;
 
     return match user {
-        Err(_) => Err(ServerError::NotFound),
-        Ok(user) => Ok(user),
+        None => Err(ServerError::NotFound),
+        Some(user) => Ok(user),
     };
 }
 

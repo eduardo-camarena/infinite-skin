@@ -3,9 +3,14 @@ name = "backend"
 version = "0.1.0"
 edition = "2021"
 
+[workspace]
+members = [".", "entity", "migration"]
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+entity = { path = "entity" }
+migration = { path = "migration" }
 actix = "0.13.0"
 actix-cors = "0.6.4"
 actix-files = "0.6.2"
@@ -19,7 +24,11 @@ itertools = "0.10.5"
 jsonwebtoken = "9.1.0"
 log = "0.4.17"
 serde = { version = "1.0.152", features = ["derive"] }
-sqlx = { version = "0.6.3", features = ["runtime-actix-rustls", "mysql", "macros"] }
+sea-orm = { version = "0.12", features = [
+  "runtime-tokio-rustls",
+  "sqlx-mysql",
+  "macros",
+] }
 strum = { version = "0.24.1", features = ["derive"] }
 strum_macros = "0.24.3"
 uuid = { version = "1.2.2", features = ["v4"] }

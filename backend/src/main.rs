@@ -12,17 +12,18 @@ use crate::interface::http::{
     users_controller::users_controller,
 };
 use crate::utils::config::{get_config, Config};
+use migration::{Migrator, MigratorTrait};
 
 use actix_cors::Cors;
 use actix_web::web::Data;
 use actix_web::{middleware, web, App, HttpServer};
 use dotenvy::dotenv;
 use interface::http::health_check_controller::health_check_controller;
-use sqlx::mysql::MySqlPool;
+use sea_orm::DatabaseConnection;
 
 #[derive(Clone)]
 pub struct AppData {
-    pool: MySqlPool,
+    db: DatabaseConnection,
     config: Config,
 }
 
@@ -34,9 +35,11 @@ async fn main() -> std::io::Result<()> {
     env_logger::init();
     dotenv().ok();
 
-    let pool: MySqlPool = establish_connection().await;
+    let db = establish_connection().await;
+    Migrator::up(&db, None).await.unwrap();
+
     let app_data = AppData {
-        pool,
+        db,
         config: get_config(),
     };
 
