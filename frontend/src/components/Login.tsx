@@ -1,9 +1,9 @@
 import { useNavigate } from '@solidjs/router';
 import { Component, createResource, For, Match, Switch } from 'solid-js';
 
+import CreateUser from './CreateAdmin';
 import Loading from './Loading';
 import { getUsers, login } from '../stores/authStore';
-import CreateUser from './CreateAdmin';
 
 const Login: Component = () => {
   const navigate = useNavigate();
@@ -21,18 +21,20 @@ const Login: Component = () => {
         <div class="px-12 pt-6">
           <div class="flex flex-wrap justify-center gap-8">
             <For each={users()}>
-              {(user) => (
-                <div
-                  class="flex flex-col"
-                  onClick={() => {
-                    login({ id: user.id }).then(() => {
-                      navigate('/');
-                    });
-                  }}
-                >
-                  <p>{user.username}</p>
-                </div>
-              )}
+              {(user) => {
+                return (
+                  <div
+                    class="flex flex-col"
+                    onClick={() => {
+                      login({ id: user.id }).then(() => {
+                        navigate('/');
+                      });
+                    }}
+                  >
+                    <p>{user.username}</p>
+                  </div>
+                );
+              }}
             </For>
           </div>
         </div>

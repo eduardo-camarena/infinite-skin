@@ -2,7 +2,7 @@ use std::fs::read_dir;
 
 use actix_files::NamedFile;
 use entity::prelude::{Album, Artist, Series};
-use sea_orm::{EntityTrait, PaginatorTrait};
+use sea_orm::{entity::*, Order, PaginatorTrait, QueryFilter, QueryOrder, QuerySelect};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -16,25 +16,50 @@ use crate::{
 
 use crate::service::errors::server_error::ServerError;
 
-#[derive(Serialize, Deserialize)]
-pub struct GetAlbumsResponse {
-    id: i32,
-    name: String,
+#[derive(Deserialize, Debug)]
+pub struct AlbumFilters {
+    artist_id: Option<i32>,
+    series_id: Option<i32>,
+    order_by_type: Option<String>,
+    order_by_column: Option<String>,
 }
 
-pub async fn get_albums(ctx: &Context, page_index: i32) -> Result<Vec<PartialAlbum>, ServerError> {
-    println!("{}, {}", page_index * 20, (page_index * 20) + 20);
-    let albums = Album::find()
-        .cursor_by(entity::album::Column::Id)
+#[derive(Serialize)]
+pub struct GetAlbumsResponse {
+    pub albums: Vec<PartialAlbum>,
+}
+
+pub async fn get_albums(
+    ctx: &Context,
+    page_index: i32,
+    album_filters: AlbumFilters,
+) -> Result<GetAlbumsResponse, ServerError> {
+    let mut query = Album::find();
+
+    if album_filters.artist_id.is_some() {
+        query = query
+            .filter(entity::album::Column::ArtistId.eq(*album_filters.artist_id.as_ref().unwrap()));
+    }
+
+    if album_filters.series_id.is_some() {
+        query = query
+            .filter(entity::album::Column::SeriesId.eq(*album_filters.series_id.as_ref().unwrap()));
+    }
+
+    let albums = query
+        .order_by(
+            get_order_by_column(album_filters.order_by_column.as_ref()),
+            get_order_by_type(album_filters.order_by_type.as_ref()),
+        )
+        .offset((page_index * 20) as u64)
+        .limit(20)
         .into_partial_model::<PartialAlbum>()
-        .after(page_index * 20)
-        .before((page_index * 20) + 20)
         .all(&ctx.db)
         .await;
 
     return match albums {
         Err(_) => Err(ServerError::NotFound),
-        Ok(albums) => Ok(albums),
+        Ok(albums) => Ok(GetAlbumsResponse { albums }),
     };
 }
 
@@ -43,15 +68,26 @@ pub struct LastPageNumberResponse {
     last_page_number: u64,
 }
 
-pub async fn last_page_number(ctx: &Context) -> Result<LastPageNumberResponse, ServerError> {
-    let res = Album::find().count(&ctx.db).await;
+pub async fn last_page_number(
+    ctx: &Context,
+    album_filters: AlbumFilters,
+) -> Result<LastPageNumberResponse, ServerError> {
+    let mut query = Album::find();
 
-    return match res {
-        Err(_) => Err(ServerError::InternalError),
-        Ok(album_count) => Ok(LastPageNumberResponse {
-            last_page_number: (album_count as f64 / 20.0).ceil() as u64,
-        }),
-    };
+    println!("{:#?}", album_filters);
+    if album_filters.artist_id.is_some() {
+        query = query
+            .filter(entity::album::Column::ArtistId.eq(*album_filters.artist_id.as_ref().unwrap()));
+    }
+
+    let album_count = query
+        .count(&ctx.db)
+        .await
+        .map_err(|_| ServerError::InternalError)?;
+
+    return Ok(LastPageNumberResponse {
+        last_page_number: (album_count as f64 / 20.0).ceil() as u64,
+    });
 }
 
 pub async fn get_file(
@@ -134,4 +170,28 @@ pub async fn get_album_info(
         artist,
         series,
     });
+}
+
+fn get_order_by_column(order_by: Option<&String>) -> entity::album::Column {
+    if order_by.is_none() {
+        return entity::album::Column::Id;
+    }
+
+    match order_by.as_ref().unwrap().as_str() {
+        "name" => entity::album::Column::Name,
+        "pages" => entity::album::Column::Pages,
+        "rating" => entity::album::Column::Rating,
+        _ => entity::album::Column::Id,
+    }
+}
+
+fn get_order_by_type(order_by_type: Option<&String>) -> Order {
+    if order_by_type.is_none() {
+        return Order::Desc;
+    }
+
+    match order_by_type.as_ref().unwrap().as_str() {
+        "asc" => Order::Asc,
+        _ => Order::Desc,
+    }
 }

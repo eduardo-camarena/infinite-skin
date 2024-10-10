@@ -4,7 +4,7 @@ export async function onSubmitHandler<T, V>(
   event: Event,
   formHandler: FormHandler,
   onSubmit: (payload: T) => Promise<V>,
-  payload: T
+  payload: T,
 ): Promise<V | undefined> {
   event.preventDefault();
   try {

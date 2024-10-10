@@ -54,7 +54,12 @@ pub async fn new_user(
     });
 }
 
-pub async fn get_users(ctx: &Context) -> Result<Vec<MainPageUser>, ServerError> {
+#[derive(Serialize)]
+pub struct GetUsersResponse {
+    users: Vec<MainPageUser>,
+}
+
+pub async fn get_users(ctx: &Context) -> Result<GetUsersResponse, ServerError> {
     let users = User::find()
         .into_partial_model::<MainPageUser>()
         .all(&ctx.db)
@@ -62,7 +67,7 @@ pub async fn get_users(ctx: &Context) -> Result<Vec<MainPageUser>, ServerError> 
 
     return match users {
         Err(_) => Err(ServerError::InternalError),
-        Ok(users) => Ok(users),
+        Ok(users) => Ok(GetUsersResponse { users }),
     };
 }
 

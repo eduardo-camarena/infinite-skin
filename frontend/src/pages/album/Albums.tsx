@@ -1,51 +1,154 @@
-import { Link } from '@solidjs/router';
-import { Component, createResource, For, Show } from 'solid-js';
+import { useSearchParams } from '@solidjs/router';
+import { Component, createResource, createSignal, For, Show } from 'solid-js';
 
+import ButtonGroup from '../../components/ButtonGroup';
 import Loading from '../../components/Loading';
-import Paginator from '../../components/PaginationComponent';
+import Pagination from '../../components/PaginationComponent';
 import { albumsStore, getAlbums } from '../../stores/albums';
-import { setCurrentAlbumStore } from '../../stores/currentAlbum';
+import { Artist, setCurrentAlbumStore } from '../../stores/currentAlbum';
+import { httpClient } from '../../utils/httpClient';
+
+const { VITE_HOST: HOST } = import.meta.env;
+
+const orderByColumns = ['id', 'rating', 'name', 'pages'] as const;
+type OrderByColumn = (typeof orderByColumns)[number];
+
+export type AlbumsSearchParams = Partial<{
+  page: string;
+  artistId: string;
+  orderByType: 'asc' | 'desc';
+  orderByColumn: OrderByColumn;
+}>;
 
 const Albums: Component = () => {
-  const [lastPageNumber] = createResource<number>(async () => {
-    const response = await fetch(
-      'http://localhost:8001/albums/last-page-number'
-    ).then((res) => res.json());
+  const [currentSelect, setCurrentSelect] = createSignal(0);
+  const [searchParams, setSearchParams] = useSearchParams<AlbumsSearchParams>();
+  const [currentPage, setCurrentPage] = createSignal(
+    Number.parseInt(searchParams.page ?? '1'),
+  );
 
-    return response.last_page_number;
+  if (!searchParams.page) {
+    setSearchParams({ page: 1 });
+  }
+
+  const [lastPageNumber] = createResource<number>(async () => {
+    const { data } = await httpClient.get('/albums/last-page-number', {
+      params: searchParams.artistId
+        ? { artistId: searchParams.artistId }
+        : undefined,
+    });
+
+    return data.lastPageNumber;
+  });
+
+  const [, { mutate: mutateAlbums }] = createResource(
+    () => ({
+      page: Number.parseInt(searchParams.page ?? '1'),
+      params: searchParams,
+    }),
+    async (opts) => {
+      await getAlbums(opts);
+    },
+  );
+
+  const [artist] = createResource(async () => {
+    if (!searchParams.artistId) {
+      return undefined;
+    }
+
+    const { data } = await httpClient.get(`/artists/${searchParams.artistId}`);
+
+    return data as Artist;
   });
 
   return (
     <div class="pt-8 px-4 sm:m-auto sm:w-[600px] lg:w-[1100px]">
+      <Show when={artist()}>
+        <div class="pb-6">
+          <div class="flex text-2xl font-semibold justify-center">
+            <p class="px-3 py-1">Artist</p>
+            <p class="bg-stone-900 px-3 py-1 rounded-l-md">{artist()?.name}</p>
+            <p class="bg-stone-800 px-3 py-1 rounded-r-md">
+              {albumsStore.albums.length}
+            </p>
+          </div>
+          <div class="pt-4 flex text-xl font-semibold justify-center gap-4">
+            <ButtonGroup
+              buttonsText={
+                ['Date', ...orderByColumns.slice(1)] as [
+                  string,
+                  string,
+                  ...string[],
+                ]
+              }
+              currentSelect={currentSelect}
+              setCurrentSelect={async (newVal) => {
+                const newSearchParams = {
+                  ...searchParams,
+                  orderByColumn: orderByColumns[newVal],
+                  orderByType: orderByColumns[newVal] === 'id' ? 'desc' : 'asc',
+                } satisfies AlbumsSearchParams;
+                setSearchParams(newSearchParams);
+                mutateAlbums(
+                  await getAlbums({
+                    page: 1,
+                    params: newSearchParams,
+                  }),
+                );
+                setCurrentSelect(newVal);
+              }}
+            />
+          </div>
+        </div>
+      </Show>
       <div class="flex flex-wrap gap-x-2 gap-y-4">
-        <For each={albumsStore}>
-          {(album) => (
-            <Link
-              href={`/a/${album.id}`}
-              class="w-[200px] h-[300px] m-auto relative"
-              onClick={() => setCurrentAlbumStore('images', [])}
-            >
-              <div class="flex flex-col justify-center h-full">
-                <img
-                  src={`http://localhost:8001/albums/${album.id}/images/1`}
-                  loading="lazy"
-                  class="w-min"
-                  alt={album.name}
-                />
-              </div>
-              <div class="absolute bottom-0 w-full text-center bg-stone-900/40">
-                <p>{album.id}</p>
-                <p>{album.name}</p>
-              </div>
-            </Link>
-          )}
-        </For>
+        <Show
+          when={albumsStore.albums.length && lastPageNumber !== undefined}
+          fallback={
+            <Loading margin="ml-[calc(50%-1rem)] mt-[calc(50%-1rem)]" />
+          }
+        >
+          <For each={albumsStore.albums}>
+            {(album) => (
+              <a
+                href={`/a/${album.id}`}
+                class="w-[200px] h-[300px] m-auto relative"
+                onClick={() => setCurrentAlbumStore('images', [])}
+              >
+                <div class="flex flex-col justify-center h-full">
+                  <img
+                    src={`${HOST}/albums/${album.id}/images/1`}
+                    loading="lazy"
+                    class="w-min"
+                    alt={album.name}
+                  />
+                </div>
+                <div class="absolute bottom-0 w-full text-center bg-stone-900/40">
+                  <p>{album.id}</p>
+                  <p>{album.name}</p>
+                </div>
+              </a>
+            )}
+          </For>
+        </Show>
       </div>
       <Show
         when={lastPageNumber() !== undefined}
         fallback={<Loading margin="ml-[calc(50%-1rem)] mt-[calc(50%-1rem)]" />}
       >
-        <Paginator lastPage={lastPageNumber() ?? 0} getNewPage={getAlbums} />
+        <Pagination
+          lastPage={lastPageNumber() ?? 0}
+          currentPage={currentPage}
+          setNewPage={(newPage) => {
+            setCurrentPage(newPage);
+            setSearchParams({ ...searchParams, page: `${newPage}` });
+          }}
+          getNewPage={async (newPage) =>
+            mutateAlbums(
+              await getAlbums({ page: newPage, params: searchParams }),
+            )
+          }
+        />
       </Show>
     </div>
   );

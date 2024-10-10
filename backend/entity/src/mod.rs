@@ -6,4 +6,5 @@ pub mod album;
 pub mod album_info;
 pub mod artist;
 pub mod series;
+pub mod tag;
 pub mod user;

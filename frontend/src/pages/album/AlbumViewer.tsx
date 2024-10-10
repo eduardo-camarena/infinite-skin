@@ -41,7 +41,7 @@ const AlbumViewer: Component = () => {
       albumId: params.albumId,
       imageId: Number.parseInt(params.imageId),
     }),
-    getImage
+    getImage,
   );
 
   const updateImage = async (payload: GetImagePayload): Promise<void> => {
@@ -50,7 +50,7 @@ const AlbumViewer: Component = () => {
       await getImage({
         albumId: payload.albumId,
         imageId: payload.imageId,
-      })
+      }),
     );
   };
 

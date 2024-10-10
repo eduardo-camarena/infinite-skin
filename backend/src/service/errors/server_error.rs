@@ -7,10 +7,10 @@ use derive_more::{Display, Error};
 
 #[derive(Debug, Display, Error)]
 pub enum ServerError {
-    #[display(fmt = "internal error")]
+    #[display(fmt = "internal server error")]
     InternalError,
 
-    #[display(fmt = "bad request")]
+    #[display(fmt = "bad request error")]
     BadClientData,
 
     #[display(fmt = "timeout")]
@@ -22,7 +22,7 @@ pub enum ServerError {
     #[display(fmt = "not found")]
     NotFound,
 
-    #[display(fmt = "unauthorizes")]
+    #[display(fmt = "unauthorized")]
     Unauthorized,
 }
 

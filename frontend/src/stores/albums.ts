@@ -1,18 +1,33 @@
 import { createStore } from 'solid-js/store';
 
-const { VITE_HOST: HOST } = import.meta.env;
+import { AlbumsSearchParams } from '../pages/album/Albums';
+import { httpClient } from '../utils/httpClient';
 
-type Albums = Array<{
+export type Album = {
   id: number;
   name: string;
-}>;
+  full_name: string;
+  pages: number;
+};
 
-export const [albumsStore, setAlbumsStore] = createStore<Albums>([]);
+type AlbumsStore = {
+  albums: Array<Album>;
+};
 
-export const getAlbums = async (page: number): Promise<void> => {
-  const albums = await fetch(`${HOST}/albums/pages/${page}`).then((res) =>
-    res.json()
-  );
+export const [albumsStore, setAlbumsStore] = createStore<AlbumsStore>({
+  albums: [],
+});
 
-  setAlbumsStore(albums);
+export type GetAlbumsPayload = {
+  page: number;
+  params?: AlbumsSearchParams;
+};
+
+export const getAlbums = async (payload: GetAlbumsPayload): Promise<void> => {
+  const { page, params } = payload;
+  const { data } = await httpClient.get(`/albums/pages/${page}`, {
+    params,
+  });
+
+  setAlbumsStore('albums', data.albums);
 };

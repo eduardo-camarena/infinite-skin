@@ -1,5 +1,5 @@
 use entity::prelude::Album;
-use sea_orm::{DerivePartialModel, FromQueryResult};
+use sea_orm::{prelude::DateTimeUtc, DerivePartialModel, FromQueryResult};
 use serde::{Deserialize, Serialize};
 
 use crate::database::models::{artist_model::PartialArtist, series_model::PartialSeries};
@@ -11,6 +11,7 @@ pub struct PartialAlbum {
     pub name: String,
     pub full_name: String,
     pub pages: i16,
+    pub created_at: DateTimeUtc,
 }
 
 #[derive(Deserialize, Serialize, FromQueryResult, DerivePartialModel)]

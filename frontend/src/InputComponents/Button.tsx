@@ -10,14 +10,14 @@ type ButtonProps = Omit<
   padding?: string;
   disabled?: () => boolean;
   variant: 'blue' | 'red' | 'gray';
-  rounded?: 'left' | 'right' | 'top' | 'bottom' | 'full' | 'none';
+  rounded?: 'left' | 'right' | 'top' | 'bottom' | 'full' | 'md' | 'none';
 };
 
 const Button: Component<ButtonProps> = ({
   text,
   variant,
   disabled,
-  rounded = 'full',
+  rounded = 'md',
   padding = 'px-6 py-2',
   ...extraProps
 }) => {
@@ -31,6 +31,8 @@ const Button: Component<ButtonProps> = ({
         return 'rounded-t-md';
       case 'bottom':
         return 'rounded-b-md';
+      case 'md':
+        return 'rounded-md';
       case 'full':
         return 'rounded-full';
       case 'none':
@@ -56,7 +58,7 @@ const Button: Component<ButtonProps> = ({
         padding,
         roundedClass,
         variantClass,
-        'inline-flex justify-center border border-transparent font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
+        'inline-flex justify-center border border-transparent font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500',
       )}
       {...extraProps}
     >

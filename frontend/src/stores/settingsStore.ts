@@ -13,7 +13,7 @@ export const [settingsStore, setSettingsStore] = createStore<OptionsStore>({
 export const scan = async (): Promise<void> => {
   setSettingsStore(() => ({ loading: 'pending' }));
 
-  await httpClient.get('/users');
+  await httpClient.post('/scan');
 
   setSettingsStore(() => ({ loading: 'idle' }));
 };

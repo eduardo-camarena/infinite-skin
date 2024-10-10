@@ -1,4 +1,4 @@
-import { Link, useParams } from '@solidjs/router';
+import { useParams } from '@solidjs/router';
 import { AiOutlineLeft, AiOutlineRight } from 'solid-icons/ai';
 import { FaSolidAnglesLeft, FaSolidAnglesRight } from 'solid-icons/fa';
 import { HiSolidArrowLeft, HiSolidCog } from 'solid-icons/hi';
@@ -35,9 +35,9 @@ const AlbumViewerControls: Component<AlbumViewerControlsProps> = ({
 
   return (
     <div class="flex py-5 relative">
-      <Link class="h-[34px] py-1.5 pl-4 z-10" href={`/a/${albumId}`}>
+      <a class="h-[34px] py-1.5 pl-4 z-10" href={`/a/${albumId}`}>
         <HiSolidArrowLeft size={22} />
-      </Link>
+      </a>
       <div class="flex-1 flex justify-center absolute w-full py-1.5">
         <span>
           {' '}

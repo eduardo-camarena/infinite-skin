@@ -8,8 +8,8 @@ use std::env;
 
 use crate::database::db::establish_connection;
 use crate::interface::http::{
-    albums_controller::albums_controller, scan_controller::scan_controller,
-    users_controller::users_controller,
+    albums_controller::albums_controller, artist_controller::artist_controller,
+    scan_controller::scan_controller, users_controller::users_controller,
 };
 use crate::utils::config::{get_config, Config};
 use migration::{Migrator, MigratorTrait};
@@ -34,14 +34,14 @@ async fn main() -> std::io::Result<()> {
     std::env::set_var("RUST_LOG", "debug");
     env_logger::init();
     dotenv().ok();
-
+    let config = get_config();
     let db = establish_connection().await;
-    Migrator::up(&db, None).await.unwrap();
 
-    let app_data = AppData {
-        db,
-        config: get_config(),
-    };
+    if config.env == "prod" {
+        Migrator::up(&db, None).await.unwrap();
+    }
+
+    let app_data = AppData { db, config };
 
     HttpServer::new(move || {
         // this cors policy is obvously bad, but since this is only going to
@@ -58,10 +58,11 @@ async fn main() -> std::io::Result<()> {
             .wrap(cors)
             .wrap(logger)
             .app_data(web::Data::new(app_data.clone()))
-            .service(health_check_controller())
             .service(scan_controller())
             .service(users_controller())
             .service(albums_controller())
+            .service(artist_controller())
+            .service(health_check_controller())
     })
     .bind((
         "localhost",

@@ -1,4 +1,4 @@
-import { Component, createResource, Show } from 'solid-js';
+import { Component, Show } from 'solid-js';
 
 import Loading from './Loading';
 import Button from '../InputComponents/Button';

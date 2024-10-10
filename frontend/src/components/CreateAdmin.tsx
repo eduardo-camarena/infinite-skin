@@ -1,14 +1,14 @@
-import { Component } from 'solid-js';
+import { useNavigate } from '@solidjs/router';
 import { useFormHandler } from 'solid-form-handler';
 import { zodSchema } from 'solid-form-handler/zod';
-
+import { Component } from 'solid-js';
 import { z } from 'zod';
-import TextInput from '../InputComponents/TextInput';
+
 import Button from '../InputComponents/Button';
-import { onSubmitHandler } from '../utils/forms';
+import TextInput from '../InputComponents/TextInput';
 import { newUser, NewUserPayload } from '../stores/authStore';
-import { useNavigate } from '@solidjs/router';
 import { fieldErrors } from '../utils/fieldValidation';
+import { onSubmitHandler } from '../utils/forms';
 
 export const userSchema = z.object({
   username: z
@@ -30,7 +30,7 @@ const CreateUser: Component<CreateUserProps> = ({ isAdmin = false }) => {
 
   const { formData } = formHandler;
 
-  const onSubmit = async (event: Event) => {
+  const onSubmit = async (event: Event): Promise<void> => {
     const payload = {
       ...formData(),
       role: isAdmin ? 'admin' : 'user',

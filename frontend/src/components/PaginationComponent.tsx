@@ -1,52 +1,119 @@
-import { useSearchParams } from '@solidjs/router';
-import { Component, createResource } from 'solid-js';
+import {
+  HiSolidChevronDoubleLeft,
+  HiSolidChevronDoubleRight,
+  HiSolidChevronLeft,
+  HiSolidChevronRight,
+} from 'solid-icons/hi';
+import { Accessor, Component, JSXElement } from 'solid-js';
 
-import Button from '../InputComponents/Button';
-
-type PaginatorProps = {
-  lastPage: number;
-  getNewPage: (newPage: number) => Promise<void>;
+type PageNumberProps = {
+  page: number;
+  onClick: () => void;
 };
 
-const Paginator: Component<PaginatorProps> = ({ lastPage, getNewPage }) => {
-  const [searchParams, setSearchParams] = useSearchParams<{ page: string }>();
-
-  if (!searchParams.page) {
-    setSearchParams({ page: 1 });
-  }
-  createResource(
-    () => (searchParams.page ? Number.parseInt(searchParams.page) : 1),
-    getNewPage
-  );
-
+const PageNumber: Component<PageNumberProps> = ({ page, onClick }) => {
   return (
-    <div class="pt-6 flex justify-center gap-2">
-      <Button
-        text="Previous"
-        variant="blue"
-        padding="py-1 px-4"
-        onClick={() => {
-          const newPage = Number.parseInt(searchParams.page) - 1;
-          if (newPage > 0) {
-            getNewPage(newPage);
-            setSearchParams({ page: newPage });
-          }
-        }}
-      />
-      <Button
-        text="Next"
-        variant="blue"
-        padding="py-1 px-4"
-        onClick={() => {
-          const newPage = Number.parseInt(searchParams.page) + 1;
-          if (newPage <= lastPage) {
-            getNewPage(newPage);
-            setSearchParams({ page: newPage });
-          }
-        }}
-      />
+    <div class="my-auto">
+      <button class="text-xl font-semibold" onClick={onClick}>
+        {page}
+      </button>
     </div>
   );
 };
 
-export default Paginator;
+type PaginationProps = {
+  lastPage: number;
+  currentPage: Accessor<number>;
+  setNewPage: (newPage: number) => void;
+  getNewPage: (page: number) => Promise<void>;
+};
+
+const Pagination: Component<PaginationProps> = ({
+  lastPage,
+  currentPage,
+  setNewPage,
+  getNewPage,
+}) => {
+  const pageNumbers = ((): JSXElement => {
+    if (lastPage < 7) {
+      return Array.from(Array(lastPage), (_, page) => (
+        <PageNumber
+          page={page + 1}
+          onClick={() => {
+            getNewPage(page);
+            setNewPage(page);
+          }}
+        />
+      ));
+    }
+
+    return (
+      <div class="px-2 flex flex-row gap-3">
+        {(currentPage() === 1
+          ? [1, 2, 3, 4, 5]
+          : [
+              currentPage(),
+              currentPage() + 1,
+              currentPage() + 2,
+              currentPage() + 3,
+              currentPage() + 4,
+            ]
+        ).map((page) => (
+          <PageNumber
+            page={page}
+            onClick={() => {
+              getNewPage(page);
+              setNewPage(page);
+            }}
+          />
+        ))}
+      </div>
+    );
+  })();
+
+  return (
+    <div class="pt-6 flex justify-center gap-2">
+      <button
+        onClick={() => {
+          getNewPage(0);
+          setNewPage(1);
+        }}
+      >
+        <HiSolidChevronDoubleLeft size="22" />
+      </button>
+      <button
+        onClick={() => {
+          const newPage = currentPage() - 1;
+          if (newPage > 0) {
+            getNewPage(newPage);
+            setNewPage(newPage);
+          }
+        }}
+      >
+        <HiSolidChevronLeft size="22" />
+      </button>
+      {pageNumbers}
+      <button
+        onClick={() => {
+          const newPage = currentPage() + 1;
+          if (newPage <= lastPage) {
+            getNewPage(newPage);
+            setNewPage(newPage);
+          }
+        }}
+      >
+        <HiSolidChevronRight size="22" />
+      </button>
+      <button
+        onClick={() => {
+          getNewPage(lastPage - 1);
+          setNewPage(lastPage);
+        }}
+      >
+        <HiSolidChevronDoubleRight size="22" />
+      </button>
+    </div>
+  );
+};
+
+export default Pagination;

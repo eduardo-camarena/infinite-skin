@@ -34,9 +34,9 @@ pub async fn scan_albums(ctx: &Context, user_id: i32) -> Result<(), ServerError>
             format!(
                 "WITH t(a) AS (VALUES(\"{}\")) SELECT t.a FROM t WHERE t.a NOT IN(SELECT full_name FROM album);",
                 folders
-        .iter()
-        .map(|folder| folder.split_once(&media_folder_with_slash).unwrap().1)
-        .join("\"), (\"")
+                    .iter()
+                    .map(|folder| folder.split_once(&media_folder_with_slash).unwrap().1)
+                    .join("\"), (\"")
             )
         ))
         .await;

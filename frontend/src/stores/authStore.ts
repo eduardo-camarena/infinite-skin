@@ -53,9 +53,10 @@ export const getTokenInfo = (): void => {
 };
 
 export const getUsers = async (): Promise<Omit<User, 'role'>[]> => {
-  const { data } = await httpClient.get('/users');
+  const { data } = await httpClient.get<{ users: User[] }>('/users');
+  console.log(data);
 
-  return data;
+  return data.users;
 };
 
 export const getUser = async (): Promise<void> => {

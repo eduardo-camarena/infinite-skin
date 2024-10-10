@@ -1,9 +1,9 @@
-import { Outlet, useNavigate } from '@solidjs/router';
-import { Component, createEffect } from 'solid-js';
+import { useNavigate } from '@solidjs/router';
+import { ParentComponent, createEffect } from 'solid-js';
 
 import { getTokenInfo, getUser } from '../stores/authStore';
 
-const RequireAuth: Component = () => {
+const RequireAuth: ParentComponent = ({ children }) => {
   const navigate = useNavigate();
 
   createEffect(() => {
@@ -18,11 +18,7 @@ const RequireAuth: Component = () => {
     }
   });
 
-  return (
-    <>
-      <Outlet />
-    </>
-  );
+  return <>{children}</>;
 };
 
 export default RequireAuth;

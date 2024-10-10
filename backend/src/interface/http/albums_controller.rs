@@ -1,8 +1,11 @@
-use crate::{service::albums_service, Context};
+use crate::{
+    service::albums_service::{self, AlbumFilters},
+    Context,
+};
 
 use actix_web::{
     get,
-    web::{self, Json, Path},
+    web::{self, Json, Path, Query},
     HttpRequest, Responder,
 };
 
@@ -15,8 +18,8 @@ pub fn albums_controller() -> actix_web::Scope {
 }
 
 #[get("/last-page-number")]
-async fn last_page_number(ctx: Context) -> impl Responder {
-    let res = albums_service::last_page_number(&ctx).await;
+async fn last_page_number(ctx: Context, query_params: Query<AlbumFilters>) -> impl Responder {
+    let res = albums_service::last_page_number(&ctx, query_params.into_inner()).await;
 
     return match res {
         Ok(album) => Ok(Json(album)),
@@ -25,10 +28,14 @@ async fn last_page_number(ctx: Context) -> impl Responder {
 }
 
 #[get("/pages/{page}")]
-async fn get_albums(path: Path<i32>, ctx: Context) -> impl Responder {
+async fn get_albums(
+    path: Path<i32>,
+    query_params: Query<AlbumFilters>,
+    ctx: Context,
+) -> impl Responder {
     let page_index = path.into_inner() - 1;
 
-    let res = albums_service::get_albums(&ctx, page_index).await;
+    let res = albums_service::get_albums(&ctx, page_index, query_params.into_inner()).await;
 
     return match res {
         Ok(albums) => Ok(Json(albums)),

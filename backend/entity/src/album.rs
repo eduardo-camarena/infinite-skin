@@ -17,6 +17,7 @@ pub struct Model {
     pub series_id: Option<i32>,
     pub artist_id: Option<i32>,
     pub user_id: i32,
+    pub rating: i16,
     pub created_at: DateTimeUtc,
     pub updated_at: DateTimeUtc,
 }
