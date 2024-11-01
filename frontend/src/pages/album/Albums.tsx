@@ -1,14 +1,15 @@
 import { useSearchParams } from '@solidjs/router';
 import { Component, createResource, createSignal, For, Show } from 'solid-js';
 
+import AlbumThumbnail, {
+  getScrollHeight,
+} from '../../components/AlbumThumbnail';
 import ButtonGroup from '../../components/ButtonGroup';
 import Loading from '../../components/Loading';
 import Pagination from '../../components/PaginationComponent';
 import { albumsStore, getAlbums } from '../../stores/albums';
-import { Artist, setCurrentAlbumStore } from '../../stores/currentAlbum';
+import { Artist } from '../../stores/currentAlbum';
 import { httpClient } from '../../utils/httpClient';
-
-const { VITE_HOST: HOST } = import.meta.env;
 
 const orderByColumns = ['id', 'rating', 'name', 'pages'] as const;
 type OrderByColumn = (typeof orderByColumns)[number];
@@ -27,7 +28,7 @@ const Albums: Component = () => {
     Number.parseInt(searchParams.page ?? '1'),
   );
 
-  if (!searchParams.page) {
+  if (!searchParams.page || Number.parseInt(searchParams.page) <= 0) {
     setSearchParams({ page: 1 });
   }
 
@@ -110,24 +111,13 @@ const Albums: Component = () => {
         >
           <For each={albumsStore.albums}>
             {(album) => (
-              <a
-                href={`/a/${album.id}`}
-                class="w-[200px] h-[300px] m-auto relative"
-                onClick={() => setCurrentAlbumStore('images', [])}
-              >
-                <div class="flex flex-col justify-center h-full">
-                  <img
-                    src={`${HOST}/albums/${album.id}/images/1`}
-                    loading="lazy"
-                    class="w-min"
-                    alt={album.name}
-                  />
-                </div>
-                <div class="absolute bottom-0 w-full text-center bg-stone-900/40">
-                  <p>{album.id}</p>
-                  <p>{album.name}</p>
-                </div>
-              </a>
+              <AlbumThumbnail
+                albumId={album.id}
+                albumName={album.name}
+                groupHoverScrollHeight={getScrollHeight(
+                  Math.ceil(album.name.length / 25),
+                )}
+              />
             )}
           </For>
         </Show>

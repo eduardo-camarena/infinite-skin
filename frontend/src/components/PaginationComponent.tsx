@@ -49,15 +49,33 @@ const Pagination: Component<PaginationProps> = ({
 
     return (
       <div class="px-2 flex flex-row gap-3">
-        {(currentPage() === 1
+        {currentPage() <= 3 === false && (
+          <>
+            <PageNumber
+              page={1}
+              onClick={() => {
+                getNewPage(1);
+                setNewPage(1);
+              }}
+            />
+            {currentPage() <= 4 === false && (
+              <div class="my-auto">
+                <button class="text-xl font-semibold">...</button>
+              </div>
+            )}
+          </>
+        )}
+        {(currentPage() <= 2
           ? [1, 2, 3, 4, 5]
-          : [
-              currentPage(),
-              currentPage() + 1,
-              currentPage() + 2,
-              currentPage() + 3,
-              currentPage() + 4,
-            ]
+          : currentPage() <= lastPage - 3
+            ? [
+                currentPage() - 2,
+                currentPage() - 1,
+                currentPage(),
+                currentPage() + 1,
+                currentPage() + 2,
+              ]
+            : [16, 17, 18, 19, 20]
         ).map((page) => (
           <PageNumber
             page={page}
@@ -67,6 +85,22 @@ const Pagination: Component<PaginationProps> = ({
             }}
           />
         ))}
+        {currentPage() > lastPage - 3 === false && (
+          <>
+            {currentPage() > lastPage - 4 === false && (
+              <div class="my-auto">
+                <button class="text-xl font-semibold">...</button>
+              </div>
+            )}
+            <PageNumber
+              page={lastPage}
+              onClick={() => {
+                getNewPage(lastPage);
+                setNewPage(lastPage);
+              }}
+            />
+          </>
+        )}
       </div>
     );
   })();

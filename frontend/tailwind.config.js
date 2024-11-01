@@ -9,7 +9,12 @@ module.exports = {
       lg: '1024px',
       xl: '1280px',
     },
-    extend: {},
+    extend: {
+      transitionProperty: {
+        width: 'width',
+        height: 'height',
+      },
+    },
   },
   plugins: [require('@tailwindcss/forms')],
 };
