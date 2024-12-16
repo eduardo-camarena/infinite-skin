@@ -1,18 +1,43 @@
 services:
   is_database:
-      container_name: is_mariadb
-      image: mariadb:10.9.5
-      volumes:
-        - is_dbdata:/var/lib/mysql
-      networks:
-        - infinite-skin
-      environment:
-        - "MYSQL_DATABASE=infinite_skin"
-        - "MYSQL_USER=infinite_skin"
-        - "MYSQL_PASSWORD=infinite_skin"
-        - "MYSQL_ROOT_PASSWORD=secret"
-      ports:
-        - 3306:3306
+    container_name: is_mariadb
+    image: mariadb:10.9.5
+    volumes:
+      - is_dbdata:/var/lib/mysql
+    networks:
+      - infinite-skin
+    environment:
+      - "MYSQL_DATABASE=infinite_skin"
+      - "MYSQL_USER=infinite_skin"
+      - "MYSQL_PASSWORD=infinite_skin"
+      - "MYSQL_ROOT_PASSWORD=secret"
+    ports:
+      - 3306:3306
+    healthcheck:
+      test: mysqladmin ping -h 127.0.0.1 -u $$MYSQL_USER --password=$$MYSQL_PASSWORD
+      start_period: 5s
+      interval: 5s
+      timeout: 5s
+      retries: 55
+
+  is_backend:
+    image: is_backend
+    container_name: is_backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file: ./.env
+    depends_on:
+      is_database:
+        condition: service_healthy
+        restart: true
+    ports:
+      - 8001:80
+    networks:
+      - infinite-skin
+    volumes:
+      - ./backend/src/:/app/src
+      - ${MEDIA_FOLDER?error}:/media_folder:ro
 
   is_frontend:
     image: is_frontend
@@ -25,7 +50,7 @@ services:
     command: yarn start
     env_file: ./frontend/.env
     ports:
-      - '8080:3000'
+      - 8080:3000
     networks:
       - infinite-skin
     volumes:

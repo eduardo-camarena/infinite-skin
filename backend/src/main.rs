@@ -65,7 +65,7 @@ async fn main() -> std::io::Result<()> {
             .service(health_check_controller())
     })
     .bind((
-        "localhost",
+        "0.0.0.0",
         env::var("APP_PORT")
             .expect("app port not set")
             .parse::<u16>()

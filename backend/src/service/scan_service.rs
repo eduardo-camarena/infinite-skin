@@ -27,6 +27,7 @@ pub async fn scan_albums(ctx: &Context, user_id: i32) -> Result<(), ServerError>
     let media_folder = format!("{}/images", &ctx.config.media_folder);
     let media_folder_with_slash = format!("{}/", &media_folder);
     let folders = get_folders(&media_folder);
+    println!("{:?}", folders);
     let unpersisted_albums = ctx
         .db
         .query_all(Statement::from_string(
@@ -224,10 +225,19 @@ fn add_metadata(folder_path: &str, album_metadata: &mut AlbumWithMetadata) {
 fn get_folders(root_folder: &String) -> Vec<String> {
     return WalkDir::new(root_folder)
         .into_iter()
-        .filter_map(|file| file.ok())
-        .filter(|file| file.metadata().unwrap().is_dir())
+        .filter_map(|file| {
+            println!("{:#?}", file);
+            file.ok()
+        })
+        .filter(|file| {
+            println!("{:#?}", file);
+            file.metadata().unwrap().is_dir()
+        })
         .filter(|folder| folder.path().to_str().unwrap() != root_folder)
-        .map(|folder| folder.path().to_string_lossy().to_string())
+        .map(|folder| {
+            println!("{:#?}", folder);
+            folder.path().to_string_lossy().to_string()
+        })
         .collect();
 }
 

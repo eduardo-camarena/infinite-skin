@@ -5,7 +5,16 @@ use std::env;
 pub async fn establish_connection() -> DatabaseConnection {
     dotenv().ok();
 
-    let database_url = env::var("DATABASE_URL").expect("Database url must be set");
+    let database_url = format!(
+        "mysql://{}:{}@{}:{}/{}",
+        env::var("MYSQL_USER").expect("Database user must be set"),
+        env::var("MYSQL_PASSWORD").expect("Database password must be set"),
+        env::var("MYSQL_HOST").expect("Database host must be set"),
+        env::var("MYSQL_PORT").expect("Database port must be set"),
+        env::var("MYSQL_DATABASE").expect("Database name must be set")
+    );
+
+    println!("{}", database_url);
     let mut connection_options = ConnectOptions::new(database_url);
     connection_options
         .min_connections(5)

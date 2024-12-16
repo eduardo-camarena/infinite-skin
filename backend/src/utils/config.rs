@@ -1,5 +1,3 @@
-use dotenvy::dotenv;
-
 use std::env;
 
 #[derive(Clone)]
@@ -10,11 +8,9 @@ pub struct Config {
 }
 
 pub fn get_config() -> Config {
-    dotenv().ok();
-
     return Config {
-        env: env::var("ENV").expect("env is not set"),
-        media_folder: env::var("MEDIA_FOLDER").expect("media folder is not set"),
+        env: env::var("ENVIRONMENT").expect("env is not set"),
+        media_folder: String::from("/media_folder"),
         jwt_secret: env::var("JWT_SECRET").expect("JWT secret is not set"),
     };
 }
