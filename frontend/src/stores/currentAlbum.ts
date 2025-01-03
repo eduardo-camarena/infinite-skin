@@ -19,8 +19,8 @@ export type Album = {
   name: string;
   fullName: string;
   pages: number;
-  artist: Artist;
-  series: Series;
+  artist?: Artist;
+  series?: Series;
 };
 
 type Image = { id: number; data: string };
@@ -76,5 +76,6 @@ export const getImage = async (payload: GetImagePayload): Promise<string> => {
 
     return image;
   }
+
   return image.data;
 };

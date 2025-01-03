@@ -44,9 +44,9 @@ const AlbumInfo: Component = () => {
                       href={`/a`}
                       tagParams={{
                         page: 1,
-                        artistId: currentAlbumStore.album.artist.id,
+                        artistId: currentAlbumStore.album.artist?.id ?? '',
                       }}
-                      text={currentAlbumStore.album.artist.name}
+                      text={currentAlbumStore.album.artist?.name ?? ''}
                     />
                   </div>
                   <p class="pb-1">Pages: {currentAlbumStore.album.pages}</p>

@@ -1,7 +1,8 @@
 use entity::prelude::{Album, Artist, Series};
-use itertools::Itertools;
+use itertools::{join, Itertools};
 use sea_orm::{entity::*, ConnectionTrait, DatabaseBackend, EntityTrait, QueryFilter, Statement};
-use std::fs::read_dir;
+use std::collections::HashMap;
+use std::fs::{self, read_dir};
 use walkdir::WalkDir;
 
 use crate::database::models::{artist_model::PartialArtist, series_model::PartialSeries};
@@ -27,7 +28,6 @@ pub async fn scan_albums(ctx: &Context, user_id: i32) -> Result<(), ServerError>
     let media_folder = format!("{}/images", &ctx.config.media_folder);
     let media_folder_with_slash = format!("{}/", &media_folder);
     let folders = get_folders(&media_folder);
-    println!("{:?}", folders);
     let unpersisted_albums = ctx
         .db
         .query_all(Statement::from_string(
@@ -137,7 +137,6 @@ pub async fn scan_albums(ctx: &Context, user_id: i32) -> Result<(), ServerError>
             chapter_number = album.chapter_number.unwrap();
         }
 
-        println!("{:?}{:?}", artist_id, series_id);
         Album::insert(entity::album::ActiveModel {
             name: Set(album.name),
             full_name: Set(album.full_name),
@@ -185,15 +184,15 @@ fn get_albums_with_metadata(folders: Vec<String>, root_folder: &String) -> Vec<A
             .collect::<Vec<String>>();
 
         if !pages.is_empty() {
-            let mut album_with_metadata = AlbumWithMetadata {
+            let metadata = get_metadata(full_name, root_folder);
+            let album_with_metadata = AlbumWithMetadata {
                 name: String::from(name),
                 full_name: full_name.to_string(),
                 pages,
-                artist: None,
-                series: None,
-                chapter_number: None,
+                artist: metadata.get("artist").map(String::from),
+                series: metadata.get("series").map(String::from),
+                chapter_number: metadata.get("chapter_number").map(|val| val.parse::<i16>().unwrap_or(1)),
             };
-            add_metadata(full_name, &mut album_with_metadata);
 
             albums_with_metadata.push(album_with_metadata);
         }
@@ -202,40 +201,37 @@ fn get_albums_with_metadata(folders: Vec<String>, root_folder: &String) -> Vec<A
     return albums_with_metadata;
 }
 
-fn add_metadata(folder_path: &str, album_metadata: &mut AlbumWithMetadata) {
-    for folder in folder_path.split('/') {
-        let (_, metadata) = folder.split_once('[').unwrap_or((folder, ""));
-        if !metadata.is_empty() {
-            for item in metadata[..metadata.len() - 1].split(", ") {
-                if item.contains("artist") {
-                    album_metadata.artist = Some(String::from(item.split_once('=').unwrap().1));
-                } else if item.contains("series") {
-                    album_metadata.series = Some(String::from(item.split_once('=').unwrap().1));
-                } else if item.contains("chapter_number") {
-                    let chapter = String::from(item.split_once('=').unwrap().1).parse::<i16>();
-                    if chapter.is_ok() {
-                        album_metadata.chapter_number = Some(chapter.unwrap());
-                    }
-                }
+fn get_metadata(folder_path: &str, root_folder: &str) -> HashMap<String, String> {
+    let mut metadata: HashMap<String, String> = HashMap::new();
+    let folders = folder_path.split("/").collect::<Vec<&str>>();
+    let mut folders_to_use = folders.len() - 1;
+
+    while folders_to_use > 0 {
+        let file_name = format!("{}/{}/metadata.txt",root_folder, join(&folders[0..folders_to_use], "/"));
+        let metadata_file = fs::read_to_string(file_name);
+        if metadata_file.is_ok() {
+            for line in metadata_file.unwrap().lines() {
+                let (key, value) = line.split_once("=").unwrap_or(("", ""));
+                metadata.insert(String::from(key), String::from(value));
             }
         }
+        folders_to_use -= 1;
     }
+
+    metadata
 }
 
 fn get_folders(root_folder: &String) -> Vec<String> {
     return WalkDir::new(root_folder)
         .into_iter()
         .filter_map(|file| {
-            println!("{:#?}", file);
             file.ok()
         })
         .filter(|file| {
-            println!("{:#?}", file);
             file.metadata().unwrap().is_dir()
         })
         .filter(|folder| folder.path().to_str().unwrap() != root_folder)
         .map(|folder| {
-            println!("{:#?}", folder);
             folder.path().to_string_lossy().to_string()
         })
         .collect();

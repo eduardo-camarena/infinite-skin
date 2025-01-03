@@ -34,6 +34,7 @@ const Pagination: Component<PaginationProps> = ({
   setNewPage,
   getNewPage,
 }) => {
+  console.log(lastPage);
   const pageNumbers = ((): JSXElement => {
     if (lastPage < 7) {
       return Array.from(Array(lastPage), (_, page) => (
@@ -75,7 +76,7 @@ const Pagination: Component<PaginationProps> = ({
                 currentPage() + 1,
                 currentPage() + 2,
               ]
-            : [16, 17, 18, 19, 20]
+            : [lastPage - 4, lastPage - 3, lastPage - 2, lastPage - 1, lastPage]
         ).map((page) => (
           <PageNumber
             page={page}

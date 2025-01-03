@@ -45,6 +45,7 @@ const AlbumViewer: Component = () => {
   );
 
   const updateImage = async (payload: GetImagePayload): Promise<void> => {
+    mutate(undefined);
     navigate(`/a/${payload.albumId}/p/${payload.imageId}`);
     mutate(
       await getImage({
@@ -81,7 +82,9 @@ const AlbumViewer: Component = () => {
   return (
     <Show
       when={currentAlbumStore.album}
-      fallback={<Loading margin="ml-[calc(50%-1rem)] mt-[calc(50%-1rem)]" />}
+      fallback={
+        <Loading margin="w-full pl-[calc(50%-1rem)] mt-[calc(50%-1rem)]" />
+      }
     >
       {currentAlbumStore.album && (
         <div class="flex flex-col justify-center">
@@ -97,7 +100,9 @@ const AlbumViewer: Component = () => {
               <Match when={viewType() === 'singleImage'}>
                 <Show
                   when={image()}
-                  fallback={<Loading margin="pt-[calc(50%-1rem)]" />}
+                  fallback={
+                    <Loading margin="w-full pl-[calc(50%-1rem)] mt-[calc(50%-1rem)]" />
+                  }
                 >
                   <img
                     src={image()}

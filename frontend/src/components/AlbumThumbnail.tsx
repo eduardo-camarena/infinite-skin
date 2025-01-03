@@ -43,12 +43,6 @@ const AlbumThumbnail: Component<AlbumThumbnailProps> = ({
   albumName,
   groupHoverScrollHeight,
 }) => {
-  console.log(
-    albumId,
-    groupHoverScrollHeight,
-    albumName.length,
-    Math.ceil((albumName.length + 1) / 25),
-  );
   return (
     <a
       href={`/a/${albumId}`}

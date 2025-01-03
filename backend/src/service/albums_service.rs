@@ -74,7 +74,6 @@ pub async fn last_page_number(
 ) -> Result<LastPageNumberResponse, ServerError> {
     let mut query = Album::find();
 
-    println!("{:#?}", album_filters);
     if album_filters.artist_id.is_some() {
         query = query
             .filter(entity::album::Column::ArtistId.eq(*album_filters.artist_id.as_ref().unwrap()));
