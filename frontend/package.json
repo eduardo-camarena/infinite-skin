@@ -2,41 +2,35 @@
   "name": "infinite-skin-frontend",
   "version": "0.0.0",
   "description": "",
-  "scripts": {
-    "start": "DISABLE_ESLINT_PLUGIN=true vite --host --port=3000",
-    "dev": "vite",
-    "lint": "eslint --ext ts,tsx src",
-    "build": "vite build",
-    "serve": "vite preview",
-    "format": "prettier --write src"
-  },
   "license": "MIT",
+  "scripts": {
+    "start": "vite --host --port=3000",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "biome lint --write src",
+    "lint-check": "biome lint src",
+    "format": "biome format --write src",
+    "format-check": "biome format src"
+  },
   "devDependencies": {
+    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/postcss": "^4.0.17",
     "@biomejs/biome": "1.9.4",
     "@solidjs/router": "^0.13.6",
     "@zag-js/solid": "^0.50.0",
-    "axios": "^1.7.7",
+    "axios": "^1.8.4",
     "jwt-decode": "^4.0.0",
+    "postcss": "^8.5.3",
     "solid-form-handler": "^1.2.3",
     "solid-icons": "^1.1.0",
-    "solid-js": "^1.9.3",
-    "zod": "^3.23.8"
-  },
-  "dependencies": {
-    "@tailwindcss/forms": "^0.5.9",
-    "@tailwindcss/postcss": "^4.0.17",
-    "@types/jwt-decode": "^3.1.0",
-    "@typescript-eslint/eslint-plugin": "^7.18.0",
-    "@typescript-eslint/parser": "^7.18.0",
-    "eslint": "^8.57.1",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-import": "^2.31.0",
-    "eslint-plugin-prettier": "^5.2.1",
-    "postcss": "^8.4.49",
-    "prettier": "^3.3.3",
+    "solid-js": "^1.9.5",
     "tailwindcss": "^4.0.17",
     "typescript": "5.5",
-    "vite": "^5.4.11",
-    "vite-plugin-solid": "^2.10.2"
+    "vite": "^5.4.15",
+    "vite-plugin-solid": "^2.11.6",
+    "zod": "^3.24.2"
+  },
+  "dependencies": {
+    "@types/jwt-decode": "^3.1.0"
   }
 }
