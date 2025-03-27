@@ -31,7 +31,7 @@ const TextInput: Component<TextInputProps> = (props) => {
             <input
               {...rest}
               {...field.props}
-              class="block w-full rounded-md scroll-mt-24 scroll-mb-32 dark:bg-stone-800 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 border-gray-300"
+              class="block w-full rounded-md scroll-mt-24 scroll-mb-32 dark:bg-stone-800 shadow-xs focus:ring-indigo-500 focus:border-indigo-500 border-gray-300"
             />
             <Show when={field.helpers.error}>
               <div class="h-6 mt-1">

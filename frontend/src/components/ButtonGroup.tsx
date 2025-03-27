@@ -20,7 +20,7 @@ const ButtonGroup: Component<ButtonGroupProps> = ({
   setCurrentSelect,
 }) => {
   return (
-    <span class="relative z-0 inline-flex shadow-sm rounded-md">
+    <span class="relative z-0 inline-flex shadow-xs rounded-md">
       <button
         type="button"
         onClick={() => {
@@ -32,7 +32,7 @@ const ButtonGroup: Component<ButtonGroupProps> = ({
           py,
           textSize,
           currentSelect() === 0
-            ? 'z-10 outline-none ring-1 ring-indigo-500 border-indigo-500'
+            ? 'z-10 outline-hidden ring-1 ring-indigo-500 border-indigo-500'
             : '',
         )}
       >
@@ -52,7 +52,7 @@ const ButtonGroup: Component<ButtonGroupProps> = ({
                 py,
                 textSize,
                 currentSelect() === index() + 1
-                  ? 'z-10 outline-none ring-1 ring-indigo-500 border-indigo-500'
+                  ? 'z-10 outline-hidden ring-1 ring-indigo-500 border-indigo-500'
                   : '',
               )}
             >
@@ -72,7 +72,7 @@ const ButtonGroup: Component<ButtonGroupProps> = ({
           py,
           textSize,
           currentSelect() === buttonsText.length - 1
-            ? 'z-10 outline-none ring-1 ring-indigo-500 border-indigo-500'
+            ? 'z-10 outline-hidden ring-1 ring-indigo-500 border-indigo-500'
             : '',
         )}
       >

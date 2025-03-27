@@ -43,11 +43,11 @@ const Button: Component<ButtonProps> = ({
   const variantClass = (() => {
     switch (variant) {
       case 'blue':
-        return 'shadow-sm text-white bg-indigo-600 hover:bg-indigo-700';
+        return 'shadow-xs text-white bg-indigo-600 hover:bg-indigo-700';
       case 'red':
-        return 'shadow-sm text-white bg-red-600 hover:bg-red-500';
+        return 'shadow-xs text-white bg-red-600 hover:bg-red-500';
       case 'gray':
-        return 'shadow-sm text-gray-700 bg-gray-200';
+        return 'shadow-xs text-gray-700 bg-gray-200';
     }
   })();
 
@@ -58,7 +58,7 @@ const Button: Component<ButtonProps> = ({
         padding,
         roundedClass,
         variantClass,
-        'inline-flex justify-center border border-transparent font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500',
+        'inline-flex justify-center border border-transparent font-medium focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500',
       )}
       {...extraProps}
     >
