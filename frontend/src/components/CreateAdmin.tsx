@@ -53,6 +53,7 @@ const CreateUser: Component<CreateUserProps> = ({ isAdmin = false }) => {
           label="Contraseña"
           name="password"
           formHandler={formHandler}
+          type="password"
         />
       </div>
       <Button

@@ -31,6 +31,7 @@ const TextInput: Component<TextInputProps> = (props) => {
             <input
               {...rest}
               {...field.props}
+              type={local.type}
               class="block w-full rounded-md scroll-mt-24 scroll-mb-32 dark:bg-stone-800 shadow-xs focus:ring-indigo-500 focus:border-indigo-500 border-gray-300"
             />
             <Show when={field.helpers.error}>
