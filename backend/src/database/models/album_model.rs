@@ -11,6 +11,8 @@ pub struct PartialAlbum {
     pub name: String,
     pub full_name: String,
     pub pages: i16,
+    pub artist_id: Option<i32>,
+    pub series_id: Option<i32>,
     pub created_at: DateTimeUtc,
 }
 

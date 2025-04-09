@@ -1,28 +1,17 @@
 use std::fs::read_dir;
 
 use actix_files::NamedFile;
-use entity::prelude::{Album, Artist, Series};
-use sea_orm::{entity::*, Order, PaginatorTrait, QueryFilter, QueryOrder, QuerySelect};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    database::models::{
-        album_model::{AlbumWithMetadata, FullNameOnlyAlbum, PartialAlbum},
-        artist_model::PartialArtist,
-        series_model::PartialSeries,
+    database::{
+        models::album_model::{AlbumWithMetadata, PartialAlbum},
+        queries,
     },
     Context,
 };
 
 use crate::service::errors::server_error::ServerError;
-
-#[derive(Deserialize, Debug)]
-pub struct AlbumFilters {
-    artist_id: Option<i32>,
-    series_id: Option<i32>,
-    order_by_type: Option<String>,
-    order_by_column: Option<String>,
-}
 
 #[derive(Serialize)]
 pub struct GetAlbumsResponse {
@@ -32,30 +21,20 @@ pub struct GetAlbumsResponse {
 pub async fn get_albums(
     ctx: &Context,
     page_index: i32,
-    album_filters: AlbumFilters,
+    artist_id: Option<i32>,
+    series_id: Option<i32>,
+    order_by_type: Option<String>,
+    order_by_column: Option<String>,
 ) -> Result<GetAlbumsResponse, ServerError> {
-    let mut query = Album::find();
-
-    if album_filters.artist_id.is_some() {
-        query = query
-            .filter(entity::album::Column::ArtistId.eq(*album_filters.artist_id.as_ref().unwrap()));
-    }
-
-    if album_filters.series_id.is_some() {
-        query = query
-            .filter(entity::album::Column::SeriesId.eq(*album_filters.series_id.as_ref().unwrap()));
-    }
-
-    let albums = query
-        .order_by(
-            get_order_by_column(album_filters.order_by_column.as_ref()),
-            get_order_by_type(album_filters.order_by_type.as_ref()),
-        )
-        .offset((page_index * 20) as u64)
-        .limit(20)
-        .into_partial_model::<PartialAlbum>()
-        .all(&ctx.db)
-        .await;
+    let albums = queries::albums::get_with_filter(
+        &ctx.db,
+        page_index,
+        artist_id,
+        series_id,
+        order_by_type,
+        order_by_column,
+    )
+    .await;
 
     return match albums {
         Err(_) => Err(ServerError::NotFound),
@@ -70,17 +49,9 @@ pub struct LastPageNumberResponse {
 
 pub async fn last_page_number(
     ctx: &Context,
-    album_filters: AlbumFilters,
+    artist_id: Option<i32>,
 ) -> Result<LastPageNumberResponse, ServerError> {
-    let mut query = Album::find();
-
-    if album_filters.artist_id.is_some() {
-        query = query
-            .filter(entity::album::Column::ArtistId.eq(*album_filters.artist_id.as_ref().unwrap()));
-    }
-
-    let album_count = query
-        .count(&ctx.db)
+    let album_count = queries::albums::count(&ctx.db, artist_id)
         .await
         .map_err(|_| ServerError::InternalError)?;
 
@@ -94,9 +65,7 @@ pub async fn get_file(
     album_id: i32,
     image_id: i32,
 ) -> Result<NamedFile, ServerError> {
-    let album = Album::find_by_id(album_id)
-        .into_partial_model::<FullNameOnlyAlbum>()
-        .one(&ctx.db)
+    let album = queries::albums::get_full_name(&ctx.db, album_id)
         .await
         .map_err(|_| ServerError::InternalError)?;
 
@@ -132,8 +101,7 @@ pub async fn get_album_info(
     ctx: &Context,
     album_id: i32,
 ) -> Result<AlbumWithMetadata, ServerError> {
-    let res = Album::find_by_id(album_id)
-        .one(&ctx.db)
+    let res = queries::albums::find_by_id(&ctx.db, album_id)
         .await
         .map_err(|_| ServerError::InternalError)?;
 
@@ -143,54 +111,22 @@ pub async fn get_album_info(
 
     let album = res.unwrap();
 
-    let mut artist: Option<PartialArtist> = None;
-    if album.artist_id.is_some() {
-        artist = Artist::find_by_id(album.artist_id.unwrap())
-            .into_partial_model::<PartialArtist>()
-            .one(&ctx.db)
-            .await
-            .map_err(|_| ServerError::InternalError)?;
-    }
-
-    let mut series: Option<PartialSeries> = None;
-    if album.series_id.is_some() {
-        series = Series::find_by_id(album.series_id.unwrap())
-            .into_partial_model::<PartialSeries>()
-            .one(&ctx.db)
-            .await
-            .map_err(|_| ServerError::InternalError)?;
-    }
-
     return Ok(AlbumWithMetadata {
         id: album.id,
         name: album.name,
         full_name: album.full_name,
         pages: album.pages,
-        artist,
-        series,
+        artist: match album.artist_id {
+            Some(artist_id) => queries::artists::find_by_id(&ctx.db, artist_id)
+                .await
+                .map_err(|_| ServerError::InternalError)?,
+            None => None,
+        },
+        series: match album.series_id {
+            Some(series_id) => queries::series::find_by_id(&ctx.db, series_id)
+                .await
+                .map_err(|_| ServerError::InternalError)?,
+            None => None,
+        },
     });
-}
-
-fn get_order_by_column(order_by: Option<&String>) -> entity::album::Column {
-    if order_by.is_none() {
-        return entity::album::Column::Id;
-    }
-
-    match order_by.as_ref().unwrap().as_str() {
-        "name" => entity::album::Column::Name,
-        "pages" => entity::album::Column::Pages,
-        "rating" => entity::album::Column::Rating,
-        _ => entity::album::Column::Id,
-    }
-}
-
-fn get_order_by_type(order_by_type: Option<&String>) -> Order {
-    if order_by_type.is_none() {
-        return Order::Desc;
-    }
-
-    match order_by_type.as_ref().unwrap().as_str() {
-        "asc" => Order::Asc,
-        _ => Order::Desc,
-    }
 }

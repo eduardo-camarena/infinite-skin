@@ -1,3 +1,4 @@
+use crate::database::queries;
 use crate::Context;
 use crate::{
     database::models::user_model::{MainPageUser, UsesPasswordUser},
@@ -5,8 +6,6 @@ use crate::{
 };
 
 use bcrypt;
-use entity::prelude::User;
-use sea_orm::{EntityTrait, Set};
 use serde::Serialize;
 
 use crate::service::errors::server_error::ServerError;
@@ -24,18 +23,11 @@ pub async fn new_user(
         return Err(ServerError::InternalError);
     }
 
-    let res = User::insert(entity::user::ActiveModel {
-        username: Set(String::from(username)),
-        password: Set(String::from(password)),
-        role: Set(String::from(role)),
-        ..Default::default()
-    })
-    .exec(&ctx.db)
-    .await
-    .map_err(|_| ServerError::InternalError)?;
+    let res = queries::users::create(&ctx.db, username, password, role)
+        .await
+        .map_err(|_| ServerError::InternalError)?;
 
-    let new_user = User::find_by_id(res.last_insert_id)
-        .one(&ctx.db)
+    let new_user = queries::users::find_by_id(&ctx.db, res.last_insert_id)
         .await
         .map_err(|_| ServerError::InternalError)?
         .unwrap();
@@ -60,10 +52,7 @@ pub struct GetUsersResponse {
 }
 
 pub async fn get_users(ctx: &Context) -> Result<GetUsersResponse, ServerError> {
-    let users = User::find()
-        .into_partial_model::<MainPageUser>()
-        .all(&ctx.db)
-        .await;
+    let users = queries::users::find(&ctx.db).await;
 
     return match users {
         Err(_) => Err(ServerError::InternalError),
@@ -75,9 +64,7 @@ pub async fn user_uses_password(
     ctx: &Context,
     user_id: i32,
 ) -> Result<UsesPasswordUser, ServerError> {
-    let res = User::find_by_id(user_id)
-        .into_partial_model::<UsesPasswordUser>()
-        .one(&ctx.db)
+    let res = queries::users::find_user_uses_password(&ctx.db, user_id)
         .await
         .map_err(|_| ServerError::InternalError)?;
 
@@ -101,9 +88,7 @@ pub async fn login(
     password: Option<&String>,
 ) -> Result<LoginResponse, ServerError> {
     let config = &ctx.config;
-
-    let res = User::find_by_id(user_id)
-        .one(&ctx.db)
+    let res = queries::users::find_by_id_with_password(&ctx.db, user_id)
         .await
         .map_err(|_| ServerError::InternalError)?;
 
@@ -139,9 +124,7 @@ pub async fn login(
 }
 
 pub async fn get_user(auth: &Authorization, ctx: &Context) -> Result<MainPageUser, ServerError> {
-    let user = User::find_by_id(auth.sub)
-        .into_partial_model::<MainPageUser>()
-        .one(&ctx.db)
+    let user = queries::users::find_by_id(&ctx.db, auth.sub)
         .await
         .map_err(|_| ServerError::InternalError)?;
 

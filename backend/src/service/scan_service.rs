@@ -1,11 +1,10 @@
-use entity::prelude::{Album, Artist, Series};
-use itertools::{join, Itertools};
-use sea_orm::{entity::*, ConnectionTrait, DatabaseBackend, EntityTrait, QueryFilter, Statement};
+use itertools::join;
 use std::collections::HashMap;
 use std::fs::{self, read_dir};
 use walkdir::WalkDir;
 
 use crate::database::models::{artist_model::PartialArtist, series_model::PartialSeries};
+use crate::database::queries;
 use crate::service::errors::server_error::ServerError;
 use crate::Context;
 
@@ -26,31 +25,12 @@ pub async fn scan_videos(ctx: &Context, _user_id: i32) -> Result<(), ServerError
 
 pub async fn scan_albums(ctx: &Context, user_id: i32) -> Result<(), ServerError> {
     let media_folder = format!("{}/images", &ctx.config.media_folder);
-    let media_folder_with_slash = format!("{}/", &media_folder);
     let folders = get_folders(&media_folder);
-    let unpersisted_albums = ctx
-        .db
-        .query_all(Statement::from_string(
-            DatabaseBackend::MySql,
-            format!(
-                "WITH t(a) AS (VALUES(\"{}\")) SELECT t.a FROM t WHERE t.a NOT IN(SELECT full_name FROM album);",
-                folders
-                    .iter()
-                    .map(|folder| folder.split_once(&media_folder_with_slash).unwrap().1)
-                    .join("\"), (\"")
-            )
-        ))
-        .await;
+    let unpersisted_albums =
+        queries::albums::get_unpersisted_albums(&ctx.db, folders, format!("{}/", &media_folder))
+            .await;
 
-    let albums_to_persist = get_albums_with_metadata(
-        unpersisted_albums
-            .unwrap()
-            .iter()
-            .map(|row| row.try_get_many_by_index::<(String,)>())
-            .map(|row| format!("{}{}", media_folder_with_slash, row.unwrap().0))
-            .collect_vec(),
-        &media_folder,
-    );
+    let albums_to_persist = get_albums_with_metadata(unpersisted_albums, &media_folder);
 
     let mut artists: Vec<PartialArtist> = vec![];
     let mut series: Vec<PartialSeries> = vec![];
@@ -61,26 +41,20 @@ pub async fn scan_albums(ctx: &Context, user_id: i32) -> Result<(), ServerError>
             let artist_name = album.artist.as_ref().unwrap();
             let cached_artist = artists.iter().find(|artist| artist.name == *artist_name);
             if cached_artist.is_none() {
-                let persisted_artist = Artist::find()
-                    .filter(entity::artist::Column::Name.eq(artist_name))
-                    .into_partial_model::<PartialArtist>()
-                    .one(&ctx.db)
+                let persisted_artist = queries::artists::find_by_name(&ctx.db, &artist_name)
                     .await
                     .map_err(|_| ServerError::InternalError)?;
 
                 if persisted_artist.is_none() {
-                    let newly_persisted_artist = Artist::insert(entity::artist::ActiveModel {
-                        name: Set(String::from(artist_name)),
-                        ..Default::default()
-                    })
-                    .exec(&ctx.db)
-                    .await
-                    .map_err(|_| ServerError::InternalError)?;
+                    let newly_persisted_artist = queries::artists::create(&ctx.db, &artist_name)
+                        .await
+                        .map_err(|_| ServerError::InternalError)?;
 
                     let new_artist = PartialArtist {
                         id: newly_persisted_artist.last_insert_id,
                         name: String::from(artist_name),
                     };
+
                     artist_id = Some(new_artist.id);
                     artists.push(new_artist);
                 } else {
@@ -99,21 +73,14 @@ pub async fn scan_albums(ctx: &Context, user_id: i32) -> Result<(), ServerError>
                 .find(|collection| collection.name == *series_name);
 
             if cached_series.is_none() {
-                let persisted_series = Series::find()
-                    .filter(entity::series::Column::Name.eq(series_name))
-                    .into_partial_model::<PartialSeries>()
-                    .one(&ctx.db)
+                let persisted_series = queries::series::get_by_name(&ctx.db, series_name)
                     .await
                     .map_err(|_| ServerError::InternalError)?;
 
                 if persisted_series.is_none() {
-                    let newly_persisted_series = Series::insert(entity::series::ActiveModel {
-                        name: Set(String::from(series_name)),
-                        ..Default::default()
-                    })
-                    .exec(&ctx.db)
-                    .await
-                    .map_err(|_| ServerError::InternalError)?;
+                    let newly_persisted_series = queries::series::create(&ctx.db, series_name)
+                        .await
+                        .map_err(|_| ServerError::InternalError)?;
 
                     let new_series = PartialSeries {
                         id: newly_persisted_series.last_insert_id,
@@ -137,17 +104,16 @@ pub async fn scan_albums(ctx: &Context, user_id: i32) -> Result<(), ServerError>
             chapter_number = album.chapter_number.unwrap();
         }
 
-        Album::insert(entity::album::ActiveModel {
-            name: Set(album.name),
-            full_name: Set(album.full_name),
-            pages: Set(album.pages.len() as i16),
-            chapter_number: Set(chapter_number),
-            artist_id: Set(artist_id),
-            series_id: Set(series_id),
-            user_id: Set(user_id),
-            ..Default::default()
-        })
-        .exec(&ctx.db)
+        queries::albums::create(
+            &ctx.db,
+            album.name,
+            album.full_name,
+            album.pages.len() as i16,
+            chapter_number,
+            artist_id,
+            series_id,
+            user_id,
+        )
         .await
         .map_err(|_| ServerError::InternalError)?;
     }
@@ -191,7 +157,9 @@ fn get_albums_with_metadata(folders: Vec<String>, root_folder: &String) -> Vec<A
                 pages,
                 artist: metadata.get("artist").map(String::from),
                 series: metadata.get("series").map(String::from),
-                chapter_number: metadata.get("chapter_number").map(|val| val.parse::<i16>().unwrap_or(1)),
+                chapter_number: metadata
+                    .get("chapter_number")
+                    .map(|val| val.parse::<i16>().unwrap_or(1)),
             };
 
             albums_with_metadata.push(album_with_metadata);
@@ -207,7 +175,11 @@ fn get_metadata(folder_path: &str, root_folder: &str) -> HashMap<String, String>
     let mut folders_to_use = folders.len() - 1;
 
     while folders_to_use > 0 {
-        let file_name = format!("{}/{}/metadata.txt",root_folder, join(&folders[0..folders_to_use], "/"));
+        let file_name = format!(
+            "{}/{}/metadata.txt",
+            root_folder,
+            join(&folders[0..folders_to_use], "/")
+        );
         let metadata_file = fs::read_to_string(file_name);
         if metadata_file.is_ok() {
             for line in metadata_file.unwrap().lines() {
@@ -224,16 +196,10 @@ fn get_metadata(folder_path: &str, root_folder: &str) -> HashMap<String, String>
 fn get_folders(root_folder: &String) -> Vec<String> {
     return WalkDir::new(root_folder)
         .into_iter()
-        .filter_map(|file| {
-            file.ok()
-        })
-        .filter(|file| {
-            file.metadata().unwrap().is_dir()
-        })
+        .filter_map(|file| file.ok())
+        .filter(|file| file.metadata().unwrap().is_dir())
         .filter(|folder| folder.path().to_str().unwrap() != root_folder)
-        .map(|folder| {
-            folder.path().to_string_lossy().to_string()
-        })
+        .map(|folder| folder.path().to_string_lossy().to_string())
         .collect();
 }
 

@@ -1,13 +1,10 @@
-use crate::{
-    service::albums_service::{self, AlbumFilters},
-    Context,
-};
-
+use crate::{service::albums_service, Context};
 use actix_web::{
     get,
     web::{self, Json, Path, Query},
     HttpRequest, Responder,
 };
+use serde::Deserialize;
 
 pub fn albums_controller() -> actix_web::Scope {
     return web::scope("/albums")
@@ -17,9 +14,18 @@ pub fn albums_controller() -> actix_web::Scope {
         .service(get_album_info);
 }
 
+#[derive(Deserialize, Debug)]
+pub struct AlbumFilters {
+    artist_id: Option<i32>,
+    series_id: Option<i32>,
+    order_by_type: Option<String>,
+    order_by_column: Option<String>,
+}
+
 #[get("/last-page-number")]
 async fn last_page_number(ctx: Context, query_params: Query<AlbumFilters>) -> impl Responder {
-    let res = albums_service::last_page_number(&ctx, query_params.into_inner()).await;
+    let params = query_params.into_inner();
+    let res = albums_service::last_page_number(&ctx, params.artist_id).await;
 
     return match res {
         Ok(album) => Ok(Json(album)),
@@ -34,8 +40,17 @@ async fn get_albums(
     ctx: Context,
 ) -> impl Responder {
     let page_index = path.into_inner() - 1;
+    let params = query_params.into_inner();
 
-    let res = albums_service::get_albums(&ctx, page_index, query_params.into_inner()).await;
+    let res = albums_service::get_albums(
+        &ctx,
+        page_index,
+        params.artist_id,
+        params.series_id,
+        params.order_by_type,
+        params.order_by_column,
+    )
+    .await;
 
     return match res {
         Ok(albums) => Ok(Json(albums)),
