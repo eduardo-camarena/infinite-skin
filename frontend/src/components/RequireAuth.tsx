@@ -4,21 +4,21 @@ import { ParentComponent, createEffect } from 'solid-js';
 import { getTokenInfo, getUser } from '../stores/authStore';
 
 const RequireAuth: ParentComponent = ({ children }) => {
-  const navigate = useNavigate();
+	const navigate = useNavigate();
 
-  createEffect(() => {
-    const persistedToken = localStorage.getItem('token');
-    if (!persistedToken) {
-      navigate('/login');
-    } else {
-      getTokenInfo();
-      getUser().catch(() => {
-        navigate('/login');
-      });
-    }
-  });
+	createEffect(() => {
+		const persistedToken = localStorage.getItem('token');
+		if (!persistedToken) {
+			navigate('/login');
+		} else {
+			getTokenInfo();
+			getUser().catch(() => {
+				navigate('/login');
+			});
+		}
+	});
 
-  return <>{children}</>;
+	return <>{children}</>;
 };
 
 export default RequireAuth;

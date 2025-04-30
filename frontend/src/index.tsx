@@ -15,31 +15,31 @@ import WelcomeScreen from './pages/WelcomeScreen/WelcomeScreen';
 const root = document.getElementById('root');
 
 if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
-  throw new Error(
-    'Root element not found. Did you forget to add it to your index.html? Or maybe the id attribute got mispelled?',
-  );
+	throw new Error(
+		'Root element not found. Did you forget to add it to your index.html? Or maybe the id attribute got mispelled?',
+	);
 }
 
 const App: ParentComponent = ({ children }) => {
-  return <Menu>{children}</Menu>;
+	return <Menu>{children}</Menu>;
 };
 
 render(
-  () => (
-    <Router root={App}>
-      <Route path="/login" component={Login} />
-      <Route path="/" component={RequireAuth}>
-        <Route path="/settings" component={Settings} />
-        <Route path="/" component={WelcomeScreen} />
-        <Route path="/a">
-          <Route path="/" component={Albums} />
-          <Route path="/:albumId">
-            <Route path="/" component={AlbumInfo} />
-            <Route path="/p/:imageId" component={AlbumViewer} />
-          </Route>
-        </Route>
-      </Route>
-    </Router>
-  ),
-  root!,
+	() => (
+		<Router root={App}>
+			<Route path="/login" component={Login} />
+			<Route path="/" component={RequireAuth}>
+				<Route path="/settings" component={Settings} />
+				<Route path="/" component={WelcomeScreen} />
+				<Route path="/a">
+					<Route path="/" component={Albums} />
+					<Route path="/:albumId">
+						<Route path="/" component={AlbumInfo} />
+						<Route path="/p/:imageId" component={AlbumViewer} />
+					</Route>
+				</Route>
+			</Route>
+		</Router>
+	),
+	root!,
 );

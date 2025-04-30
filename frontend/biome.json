@@ -1,9 +1,23 @@
 {
   "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
-  "vcs": { "enabled": false, "clientKind": "git", "useIgnoreFile": false },
-  "files": { "ignoreUnknown": false, "ignore": [] },
-  "formatter": { "enabled": true, "indentStyle": "tab" },
-  "organizeImports": { "enabled": true },
+  "vcs": {
+    "enabled": false,
+    "clientKind": "git",
+    "useIgnoreFile": false
+  },
+  "files": {
+    "ignoreUnknown": false,
+    "ignore": [
+      "*.css"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "tab"
+  },
+  "organizeImports": {
+    "enabled": true
+  },
   "linter": {
     "enabled": true,
     "rules": {
@@ -30,19 +44,35 @@
       }
     }
   },
-  "javascript": { "formatter": { "quoteStyle": "single" } },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single"
+    }
+  },
   "overrides": [
     {
-      "include": ["**/*.ts", "**/*.tsx"],
+      "include": [
+        "**/*.ts",
+        "**/*.tsx"
+      ],
       "linter": {
         "rules": {
-          "correctness": { "noUnusedVariables": "error" },
-          "suspicious": { "noExplicitAny": "error" }
+          "correctness": {
+            "noUnusedVariables": "error"
+          },
+          "suspicious": {
+            "noExplicitAny": "error"
+          }
         }
       }
     },
     {
-      "include": ["*.ts", "*.tsx", "*.mts", "*.cts"],
+      "include": [
+        "*.ts",
+        "*.tsx",
+        "*.mts",
+        "*.cts"
+      ],
       "linter": {
         "rules": {
           "correctness": {

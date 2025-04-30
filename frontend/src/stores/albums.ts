@@ -4,30 +4,30 @@ import { AlbumsSearchParams } from '../pages/album/Albums';
 import { httpClient } from '../utils/httpClient';
 
 export type Album = {
-  id: number;
-  name: string;
-  full_name: string;
-  pages: number;
+	id: number;
+	name: string;
+	full_name: string;
+	pages: number;
 };
 
 type AlbumsStore = {
-  albums: Array<Album>;
+	albums: Array<Album>;
 };
 
 export const [albumsStore, setAlbumsStore] = createStore<AlbumsStore>({
-  albums: [],
+	albums: [],
 });
 
 export type GetAlbumsPayload = {
-  page: number;
-  params?: AlbumsSearchParams;
+	page: number;
+	params?: AlbumsSearchParams;
 };
 
 export const getAlbums = async (payload: GetAlbumsPayload): Promise<void> => {
-  const { page, params } = payload;
-  const { data } = await httpClient.get(`/albums/pages/${page}`, {
-    params,
-  });
+	const { page, params } = payload;
+	const { data } = await httpClient.get(`/albums/pages/${page}`, {
+		params,
+	});
 
-  setAlbumsStore('albums', data.albums);
+	setAlbumsStore('albums', data.albums);
 };
