@@ -1,5 +1,5 @@
 use entity::prelude::User;
-use sea_orm::{entity::*, DatabaseConnection, DbErr, EntityTrait, InsertResult, QueryFilter, Set};
+use sea_orm::{entity::*, DatabaseConnection, DbErr, EntityTrait, InsertResult, Set};
 
 use crate::database::models::user_model::{MainPageUser, UserWithPassword, UsesPasswordUser};
 

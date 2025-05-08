@@ -6,7 +6,7 @@ use actix_web::{
 
 use crate::service::health_check_service;
 
-pub fn health_check_controller() -> actix_web::Scope {
+pub fn controller() -> actix_web::Scope {
     return web::scope("/").service(health_check);
 }
 

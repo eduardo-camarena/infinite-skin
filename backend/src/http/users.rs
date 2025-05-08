@@ -1,13 +1,17 @@
-use crate::{service::users_service, utils::token::get_authorization, Context};
+use crate::{
+    http::dto::users::{LoginDTO, NewUserDTO},
+    service::users_service,
+    utils::token::get_authorization,
+    Context,
+};
 
 use actix_web::{
     get, post,
     web::{self, Json, Path},
     HttpRequest, Responder,
 };
-use serde::Deserialize;
 
-pub fn users_controller() -> actix_web::Scope {
+pub fn controller() -> actix_web::Scope {
     return web::scope("/users")
         .service(login)
         .service(get_user)
@@ -16,14 +20,8 @@ pub fn users_controller() -> actix_web::Scope {
         .service(new_user);
 }
 
-#[derive(Deserialize)]
-pub struct LoginPayload {
-    id: i32,
-    password: Option<String>,
-}
-
 #[post("/login")]
-pub async fn login(ctx: Context, payload: Json<LoginPayload>) -> impl Responder {
+pub async fn login(ctx: Context, payload: Json<LoginDTO>) -> impl Responder {
     let res = users_service::login(&ctx, payload.id, payload.password.as_ref()).await;
 
     return match res {
@@ -65,15 +63,8 @@ pub async fn user_uses_password(ctx: Context, path: Path<i32>) -> impl Responder
     };
 }
 
-#[derive(Deserialize)]
-pub struct NewUserPayload {
-    username: String,
-    password: String,
-    role: String,
-}
-
 #[post("/new")]
-pub async fn new_user(ctx: Context, payload: Json<NewUserPayload>) -> impl Responder {
+pub async fn new_user(ctx: Context, payload: Json<NewUserDTO>) -> impl Responder {
     let res =
         users_service::new_user(&ctx, &payload.username, &payload.password, &payload.role).await;
 

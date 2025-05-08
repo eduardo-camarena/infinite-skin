@@ -6,7 +6,7 @@ use actix_web::{
     Responder,
 };
 
-pub fn artist_controller() -> actix_web::Scope {
+pub fn controller() -> actix_web::Scope {
     return web::scope("/artists").service(get_artist);
 }
 

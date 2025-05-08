@@ -3,34 +3,67 @@ use std::collections::HashMap;
 use std::fs::{self, read_dir};
 use walkdir::WalkDir;
 
+use crate::database::models::library_model::PartialLibrary;
 use crate::database::models::{artist_model::PartialArtist, series_model::PartialSeries};
 use crate::database::queries;
 use crate::service::errors::server_error::ServerError;
 use crate::Context;
 
+pub async fn create(
+    ctx: &Context,
+    name: String,
+    location: String,
+    is_private: i8,
+) -> Result<PartialLibrary, ServerError> {
+    let res = queries::library::create(&ctx.db, name, location, is_private)
+        .await
+        .map_err(|_| ServerError::InternalError)?;
+
+    Ok(queries::library::find_by_id(&ctx.db, res.last_insert_id)
+        .await
+        .map_err(|_| ServerError::InternalError)?
+        .unwrap())
+}
+
 // tech debt: re-scan existing folders for new files
-pub async fn scan(ctx: &Context, user_id: i32) -> Result<(), ServerError> {
-    scan_albums(ctx, user_id).await?;
-    scan_videos(ctx, user_id).await?;
-
-    return Ok(());
-}
-
-pub async fn scan_videos(ctx: &Context, _user_id: i32) -> Result<(), ServerError> {
-    let media_folder = format!("{}/videos", &ctx.config.media_folder);
-    get_folders(&media_folder);
-
-    return Ok(());
-}
-
-pub async fn scan_albums(ctx: &Context, user_id: i32) -> Result<(), ServerError> {
+pub async fn scan(
+    ctx: &Context,
+    user_id: i32,
+    libraries: Option<Vec<i32>>,
+) -> Result<(), ServerError> {
     let media_folder = format!("{}/images", &ctx.config.media_folder);
-    let folders = get_folders(&media_folder);
-    let unpersisted_albums =
-        queries::albums::get_unpersisted_albums(&ctx.db, folders, format!("{}/", &media_folder))
-            .await;
+    if libraries.is_none() {
+        scan_library(ctx, user_id, &media_folder).await?;
+    } else {
+        for library_id in libraries.unwrap() {
+            let get_library_res = queries::library::find_by_id(&ctx.db, library_id).await;
 
-    let albums_to_persist = get_albums_with_metadata(unpersisted_albums, &media_folder);
+            match get_library_res {
+                Ok(library_opt) => match library_opt {
+                    Some(library) => {
+                        scan_library(
+                            ctx,
+                            user_id,
+                            &format!("{}/{}", media_folder, library.location),
+                        )
+                        .await?
+                    }
+                    None => println!("The library with id {} was not found", library_id),
+                },
+                Err(err) => println!("There was an error while obtaining library: {}", err),
+            }
+        }
+    }
+
+    return Ok(());
+}
+
+pub async fn scan_library(ctx: &Context, user_id: i32, library: &str) -> Result<(), ServerError> {
+    let folders = get_folders(library);
+    let unpersisted_albums =
+        queries::albums::get_unpersisted_albums(&ctx.db, folders, format!("{}/", library)).await;
+
+    let albums_to_persist = get_albums_with_metadata(unpersisted_albums, library);
 
     let mut artists: Vec<PartialArtist> = vec![];
     let mut series: Vec<PartialSeries> = vec![];
@@ -41,12 +74,12 @@ pub async fn scan_albums(ctx: &Context, user_id: i32) -> Result<(), ServerError>
             let artist_name = album.artist.as_ref().unwrap();
             let cached_artist = artists.iter().find(|artist| artist.name == *artist_name);
             if cached_artist.is_none() {
-                let persisted_artist = queries::artists::find_by_name(&ctx.db, &artist_name)
+                let persisted_artist = queries::artists::find_by_name(&ctx.db, artist_name)
                     .await
                     .map_err(|_| ServerError::InternalError)?;
 
                 if persisted_artist.is_none() {
-                    let newly_persisted_artist = queries::artists::create(&ctx.db, &artist_name)
+                    let newly_persisted_artist = queries::artists::create(&ctx.db, artist_name)
                         .await
                         .map_err(|_| ServerError::InternalError)?;
 
@@ -131,7 +164,7 @@ struct AlbumWithMetadata {
     chapter_number: Option<i16>,
 }
 
-fn get_albums_with_metadata(folders: Vec<String>, root_folder: &String) -> Vec<AlbumWithMetadata> {
+fn get_albums_with_metadata(folders: Vec<String>, root_folder: &str) -> Vec<AlbumWithMetadata> {
     let mut albums_with_metadata: Vec<AlbumWithMetadata> = vec![];
     for folder_path in folders {
         let (_, full_name) = folder_path
@@ -193,7 +226,7 @@ fn get_metadata(folder_path: &str, root_folder: &str) -> HashMap<String, String>
     metadata
 }
 
-fn get_folders(root_folder: &String) -> Vec<String> {
+fn get_folders(root_folder: &str) -> Vec<String> {
     return WalkDir::new(root_folder)
         .into_iter()
         .filter_map(|file| file.ok())

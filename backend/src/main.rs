@@ -1,16 +1,12 @@
 #![allow(clippy::needless_return)]
 mod database;
-mod interface;
+mod http;
 mod service;
 mod utils;
 
 use std::env;
 
 use crate::database::db::establish_connection;
-use crate::interface::http::{
-    albums_controller::albums_controller, artist_controller::artist_controller,
-    scan_controller::scan_controller, users_controller::users_controller,
-};
 use crate::utils::config::{get_config, Config};
 use migration::{Migrator, MigratorTrait};
 
@@ -18,7 +14,6 @@ use actix_cors::Cors;
 use actix_web::web::Data;
 use actix_web::{middleware, web, App, HttpServer};
 use dotenvy::dotenv;
-use interface::http::health_check_controller::health_check_controller;
 use sea_orm::DatabaseConnection;
 
 #[derive(Clone)]
@@ -58,11 +53,11 @@ async fn main() -> std::io::Result<()> {
             .wrap(cors)
             .wrap(logger)
             .app_data(web::Data::new(app_data.clone()))
-            .service(scan_controller())
-            .service(users_controller())
-            .service(albums_controller())
-            .service(artist_controller())
-            .service(health_check_controller())
+            .service(http::libraries::controller())
+            .service(http::users::controller())
+            .service(http::albums::controller())
+            .service(http::artists::controller())
+            .service(http::health_check::controller())
     })
     .bind((
         "0.0.0.0",
