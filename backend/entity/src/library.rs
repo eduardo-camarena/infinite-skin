@@ -3,19 +3,29 @@
 use sea_orm::entity::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
-#[sea_orm(table_name = "tag")]
+#[sea_orm(table_name = "library")]
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
-    #[sea_orm(column_type = "Text", unique)]
+    #[sea_orm(column_type = "Text")]
     pub name: String,
     #[sea_orm(column_type = "Text")]
-    pub r#type: String,
+    pub location: String,
+    pub is_private: i8,
     pub created_at: DateTimeUtc,
     pub updated_at: DateTimeUtc,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}
+pub enum Relation {
+    #[sea_orm(has_many = "super::album::Entity")]
+    Album,
+}
+
+impl Related<super::album::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Album.def()
+    }
+}
 
 impl ActiveModelBehavior for ActiveModel {}

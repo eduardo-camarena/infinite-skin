@@ -5,14 +5,17 @@ use crate::{
     Context,
 };
 use actix_web::{
-    post,
+    get, post,
     web::{self, Json, Query},
     HttpRequest, HttpResponse, Responder,
 };
 
+use super::dto::libraries::GetPossibleFoldersDTO;
+
 pub fn controller() -> actix_web::Scope {
-    return web::scope("/library")
+    return web::scope("/libraries")
         .service(create)
+        .service(get_possible_folders)
         .service(scan_media_folder);
 }
 
@@ -47,4 +50,21 @@ async fn scan_media_folder(
         Ok(_) => Ok(HttpResponse::Ok()),
         Err(err) => Err(err),
     };
+}
+
+#[get("/possible-folders")]
+async fn get_possible_folders(
+    req: HttpRequest,
+    ctx: Context,
+    params: Query<GetPossibleFoldersDTO>,
+) -> impl Responder {
+    let _ = get_authorization(&req).unwrap();
+    let payload = params.into_inner();
+
+    let res = library_service::get_possible_folders(&ctx, &payload.path);
+
+    match res {
+        Ok(possible_folders) => Ok(Json(possible_folders)),
+        Err(err) => Err(err),
+    }
 }

@@ -29,6 +29,18 @@ impl MigrationTrait for Migration {
         .await?;
 
         db.execute_unprepared(
+            "CREATE TABLE library(
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name TEXT NOT NULL,
+                location TEXT NOT NULL,
+                is_private BOOLEAN NOT NULL DEFAULT FALSE,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            )",
+        )
+        .await?;
+
+        db.execute_unprepared(
             "CREATE TABLE album(
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -39,11 +51,13 @@ impl MigrationTrait for Migration {
                 series_id INT,
                 artist_id INT,
                 user_id INT NOT NULL,
+                library_id INT NOT NULL,
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE NO ACTION ON UPDATE NO ACTION,
                 FOREIGN KEY (artist_id) REFERENCES artist(id) ON DELETE NO ACTION ON UPDATE NO ACTION,
-                FOREIGN KEY (series_id) REFERENCES series(id) ON DELETE NO ACTION ON UPDATE NO ACTION
+                FOREIGN KEY (series_id) REFERENCES series(id) ON DELETE NO ACTION ON UPDATE NO ACTION,
+                FOREIGN KEY (library_id) REFERENCES library(id) ON DELETE NO ACTION ON UPDATE NO ACTION
             )",
         )
         .await?;
@@ -68,6 +82,7 @@ impl MigrationTrait for Migration {
         let db = manager.get_connection();
         db.execute_unprepared("DROP TABLE album_info").await?;
         db.execute_unprepared("DROP TABLE album").await?;
+        db.execute_unprepared("DROP TABLE library").await?;
         db.execute_unprepared("DROP TABLE series").await?;
         db.execute_unprepared("DROP TABLE artist").await?;
         Ok(())

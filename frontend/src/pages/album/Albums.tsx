@@ -1,9 +1,7 @@
 import { useSearchParams } from '@solidjs/router';
 import { Component, createResource, createSignal, For, Show } from 'solid-js';
 
-import AlbumThumbnail, {
-	getScrollHeight,
-} from '../../components/AlbumThumbnail';
+import AlbumThumbnail from '../../components/AlbumThumbnail';
 import ButtonGroup from '../../components/ButtonGroup';
 import Loading from '../../components/Loading';
 import Pagination from '../../components/PaginationComponent';
@@ -111,13 +109,7 @@ const Albums: Component = () => {
 				>
 					<For each={albumsStore.albums}>
 						{(album) => (
-							<AlbumThumbnail
-								albumId={album.id}
-								albumName={album.name}
-								groupHoverScrollHeight={getScrollHeight(
-									Math.ceil(album.name.length / 25),
-								)}
-							/>
+							<AlbumThumbnail albumId={album.id} albumName={album.name} />
 						)}
 					</For>
 				</Show>

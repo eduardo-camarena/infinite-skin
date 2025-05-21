@@ -43,10 +43,10 @@ function changeObjCase(
 
 	for (const [key, val] of Object.entries(obj)) {
 		const newKey = transformKey(key, caseType);
-		if (Array.isArray(val)) {
-			newObj[newKey] = val.map((v) => changeObjCase(v, caseType));
-		} else if (!Array.isArray(val) && val instanceof Object) {
+		if (val instanceof Object && !Array.isArray(val)) {
 			newObj[newKey] = changeObjCase(val, caseType);
+		} else if (Array.isArray(val) && val[0] instanceof Object) {
+			newObj[newKey] = val.map((v) => changeObjCase(v, caseType));
 		} else {
 			newObj[newKey] = val;
 		}

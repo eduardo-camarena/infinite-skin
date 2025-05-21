@@ -8,15 +8,13 @@ type ButtonProps = Omit<
 > & {
 	text: string | JSX.Element;
 	padding?: string;
-	disabled?: () => boolean;
-	variant: 'blue' | 'red' | 'gray';
+	variant?: 'blue' | 'red' | 'gray';
 	rounded?: 'left' | 'right' | 'top' | 'bottom' | 'full' | 'md' | 'none';
 };
 
 const Button: Component<ButtonProps> = ({
 	text,
-	variant,
-	disabled,
+	variant = 'blue',
 	rounded = 'md',
 	padding = 'px-6 py-2',
 	...extraProps
@@ -53,7 +51,7 @@ const Button: Component<ButtonProps> = ({
 
 	return (
 		<button
-			disabled={(disabled && disabled() === true) || variant === 'gray'}
+			disabled={variant === 'gray'}
 			class={classNames(
 				padding,
 				roundedClass,

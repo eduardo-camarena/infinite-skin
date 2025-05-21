@@ -6,7 +6,7 @@ import { z } from 'zod';
 
 import Button from '../InputComponents/Button';
 import TextInput from '../InputComponents/TextInput';
-import { newUser, NewUserPayload } from '../stores/authStore';
+import { newUser } from '../stores/authStore';
 import { fieldErrors } from '../utils/fieldValidation';
 import { onSubmitHandler } from '../utils/forms';
 
@@ -28,18 +28,16 @@ const CreateUser: Component<CreateUserProps> = ({ isAdmin = false }) => {
 	const formHandler = useFormHandler(zodSchema(userSchema));
 	const navigate = useNavigate();
 
-	const { formData } = formHandler;
-
-	const onSubmit = async (event: Event): Promise<void> => {
-		const payload = {
-			...formData(),
-			role: isAdmin ? 'admin' : 'user',
-		} satisfies NewUserPayload;
-
-		onSubmitHandler(event, formHandler, newUser, payload).then(() => {
-			navigate('/');
-		});
-	};
+	const onSubmit = onSubmitHandler(
+		formHandler,
+		async (_, formValues) => {
+			newUser({
+				...formValues,
+				role: isAdmin ? 'admin' : 'user',
+			});
+		},
+		() => navigate('/'),
+	);
 
 	return (
 		<form class="flex flex-col pt-6 px-8 lg:px-[35%]" onSubmit={onSubmit}>

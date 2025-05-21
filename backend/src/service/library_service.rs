@@ -8,6 +8,7 @@ use crate::database::models::{artist_model::PartialArtist, series_model::Partial
 use crate::database::queries;
 use crate::service::errors::server_error::ServerError;
 use crate::Context;
+use serde::Serialize;
 
 pub async fn create(
     ctx: &Context,
@@ -15,6 +16,12 @@ pub async fn create(
     location: String,
     is_private: i8,
 ) -> Result<PartialLibrary, ServerError> {
+    let folder = read_dir(&location);
+
+    if folder.is_err() {
+        return Err(ServerError::NotFound);
+    }
+
     let res = queries::library::create(&ctx.db, name, location, is_private)
         .await
         .map_err(|_| ServerError::InternalError)?;
@@ -29,30 +36,31 @@ pub async fn create(
 pub async fn scan(
     ctx: &Context,
     user_id: i32,
-    libraries: Option<Vec<i32>>,
+    library_ids: Option<Vec<i32>>,
 ) -> Result<(), ServerError> {
-    let media_folder = format!("{}/images", &ctx.config.media_folder);
-    if libraries.is_none() {
-        scan_library(ctx, user_id, &media_folder).await?;
-    } else {
-        for library_id in libraries.unwrap() {
-            let get_library_res = queries::library::find_by_id(&ctx.db, library_id).await;
+    let find_libraries_res = match library_ids {
+        Some(library_ids) => {
+            queries::library::find(
+                &ctx.db,
+                Some(queries::library::FindOptions::new().add_ids(library_ids)),
+            )
+            .await
+        }
+        None => queries::library::find(&ctx.db, None).await,
+    };
 
-            match get_library_res {
-                Ok(library_opt) => match library_opt {
-                    Some(library) => {
-                        scan_library(
-                            ctx,
-                            user_id,
-                            &format!("{}/{}", media_folder, library.location),
-                        )
-                        .await?
-                    }
-                    None => println!("The library with id {} was not found", library_id),
-                },
-                Err(err) => println!("There was an error while obtaining library: {}", err),
+    match find_libraries_res {
+        Ok(libraries) => {
+            for library in libraries {
+                scan_library(
+                    ctx,
+                    user_id,
+                    &format!("{}/{}", &ctx.config.media_folder, library.location),
+                )
+                .await?
             }
         }
+        Err(err) => println!("There was an error while obtaining libraries: {}", err),
     }
 
     return Ok(());
@@ -242,4 +250,22 @@ fn get_files(folder_path: &String) -> Vec<String> {
         .filter(|file| file.as_ref().unwrap().metadata().unwrap().is_file())
         .map(|file| file.unwrap().path().into_os_string().into_string().unwrap())
         .collect();
+}
+
+#[derive(Serialize)]
+pub struct PossibleFoldersResponse {
+    folders: Vec<String>,
+}
+
+pub fn get_possible_folders(
+    _ctx: &Context,
+    path: &str,
+) -> Result<PossibleFoldersResponse, ServerError> {
+    let folders = read_dir(path)
+        .unwrap()
+        .filter(|folder| folder.as_ref().unwrap().metadata().unwrap().is_dir())
+        .map(|folder| folder.unwrap().path().to_str().unwrap().to_string())
+        .collect::<Vec<String>>();
+
+    Ok(PossibleFoldersResponse { folders })
 }

@@ -1,19 +1,25 @@
 import { FormHandler } from 'solid-form-handler';
 
-export async function onSubmitHandler<T, V>(
-	event: Event,
-	formHandler: FormHandler,
-	onSubmit: (payload: T) => Promise<V>,
-	payload: T,
-): Promise<V | undefined> {
-	event.preventDefault();
-	try {
-		await formHandler.validateForm();
-		const res = await onSubmit(payload);
+export function onSubmitHandler<T>(
+	formHandler: FormHandler<T>,
+	onSubmit: (event: Event, formData: T) => Promise<void>,
+	onFlowFinish?: () => void,
+): (event: Event) => Promise<void> {
+	return async (event: Event) => {
+		event.preventDefault();
+		const formValues = formHandler.formData();
+
+		const { isFormInvalid } = await formHandler.validateForm();
+
+		if (isFormInvalid) {
+			throw new Error();
+		}
+
+		onSubmit(event, formValues);
 		formHandler.resetForm();
 
-		return res;
-	} catch (error) {
-		console.error(error);
-	}
+		if (onFlowFinish) {
+			onFlowFinish();
+		}
+	};
 }

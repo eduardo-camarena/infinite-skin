@@ -10,38 +10,13 @@ export type TailwindHeight = `group-hover:h-[${AlbumNameScrollHeight}px]`;
 type AlbumThumbnailProps = {
 	albumId: number;
 	albumName: string;
-	groupHoverScrollHeight: TailwindHeight;
 };
 
 const { VITE_HOST: HOST } = import.meta.env;
 
-export const getScrollHeight = (rows: number): TailwindHeight => {
-	switch (rows) {
-		default:
-			return 'group-hover:h-[48px]';
-		case 2:
-			return 'group-hover:h-[72px]';
-		case 3:
-			return 'group-hover:h-[96px]';
-		case 4:
-			return 'group-hover:h-[120px]';
-		case 5:
-			return 'group-hover:h-[144px]';
-		case 6:
-			return 'group-hover:h-[168px]';
-		case 7:
-			return 'group-hover:h-[192px]';
-		case 8:
-			return 'group-hover:h-[216px]';
-		case 9:
-			return 'group-hover:h-[240px]';
-	}
-};
-
 const AlbumThumbnail: Component<AlbumThumbnailProps> = ({
 	albumId,
 	albumName,
-	groupHoverScrollHeight,
 }) => {
 	return (
 		<a
@@ -52,16 +27,13 @@ const AlbumThumbnail: Component<AlbumThumbnailProps> = ({
 			<div class="flex flex-col justify-center h-full overflow-hidden">
 				<img
 					src={`${HOST}/albums/${albumId}/images/1`}
-					loading="lazy"
 					alt={albumName}
+					loading="lazy"
 				/>
 			</div>
 			<div
 				id={`${albumId}`}
-				class={classNames(
-					'transition-all ease-in-out duration-300 absolute h-12 bottom-0 w-full text-center bg-stone-900/40 font-semibold overflow-hidden',
-					groupHoverScrollHeight,
-				)}
+				class="absolute py-1 h-12 bottom-0 w-full text-center bg-stone-900/40 font-semibold overflow-hidden group-hover:h-auto"
 			>
 				<p>{albumId}</p>
 				<p>{albumName}</p>
