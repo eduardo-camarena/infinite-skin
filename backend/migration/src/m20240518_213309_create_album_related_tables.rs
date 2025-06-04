@@ -34,8 +34,10 @@ impl MigrationTrait for Migration {
                 name TEXT NOT NULL,
                 location TEXT NOT NULL,
                 is_private BOOLEAN NOT NULL DEFAULT FALSE,
+                user_id INT NOT NULL,
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE NO ACTION ON UPDATE NO ACTION
             )",
         )
         .await?;
@@ -50,11 +52,9 @@ impl MigrationTrait for Migration {
                 chapter_number SMALLINT NOT NULL DEFAULT 0,
                 series_id INT,
                 artist_id INT,
-                user_id INT NOT NULL,
                 library_id INT NOT NULL,
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE NO ACTION ON UPDATE NO ACTION,
                 FOREIGN KEY (artist_id) REFERENCES artist(id) ON DELETE NO ACTION ON UPDATE NO ACTION,
                 FOREIGN KEY (series_id) REFERENCES series(id) ON DELETE NO ACTION ON UPDATE NO ACTION,
                 FOREIGN KEY (library_id) REFERENCES library(id) ON DELETE NO ACTION ON UPDATE NO ACTION

@@ -38,6 +38,7 @@ async fn get_albums(
         page_index,
         params.artist_id,
         params.series_id,
+        params.library_id,
         params.order_by_type,
         params.order_by_column,
     )

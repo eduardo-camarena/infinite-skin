@@ -1,11 +1,11 @@
-import { useSearchParams } from '@solidjs/router';
+import { useParams, useSearchParams } from '@solidjs/router';
 import { Component, createResource, createSignal, For, Show } from 'solid-js';
 
 import AlbumThumbnail from '../../components/AlbumThumbnail';
 import ButtonGroup from '../../components/ButtonGroup';
 import Loading from '../../components/Loading';
 import Pagination from '../../components/PaginationComponent';
-import { albumsStore, getAlbums } from '../../stores/albums';
+import { libraryStore, getCurrentLibraryAlbums } from '../../stores/libraries';
 import { Artist } from '../../stores/currentAlbum';
 import { httpClient } from '../../utils/httpClient';
 
@@ -21,6 +21,7 @@ export type AlbumsSearchParams = Partial<{
 
 const Albums: Component = () => {
 	const [currentSelect, setCurrentSelect] = createSignal(0);
+	const params = useParams<{ libraryId: string }>();
 	const [searchParams, setSearchParams] = useSearchParams<AlbumsSearchParams>();
 	const [currentPage, setCurrentPage] = createSignal(
 		Number.parseInt(searchParams.page ?? '1'),
@@ -41,12 +42,16 @@ const Albums: Component = () => {
 	});
 
 	const [, { mutate: mutateAlbums }] = createResource(
-		() => ({
-			page: Number.parseInt(searchParams.page ?? '1'),
-			params: searchParams,
-		}),
+		() => {
+			const { page, ...rest } = searchParams;
+			return {
+				params: rest,
+				libraryId: Number.parseInt(params.libraryId),
+				page: Number.parseInt(page ?? '1'),
+			};
+		},
 		async (opts) => {
-			await getAlbums(opts);
+			await getCurrentLibraryAlbums(opts);
 		},
 	);
 
@@ -68,7 +73,7 @@ const Albums: Component = () => {
 						<p class="px-3 py-1">Artist</p>
 						<p class="bg-stone-900 px-3 py-1 rounded-l-md">{artist()?.name}</p>
 						<p class="bg-stone-800 px-3 py-1 rounded-r-md">
-							{albumsStore.albums.length}
+							{libraryStore.currentLibrarylbums?.length}
 						</p>
 					</div>
 					<div class="pt-4 flex text-xl font-semibold justify-center gap-4">
@@ -89,9 +94,10 @@ const Albums: Component = () => {
 								} satisfies AlbumsSearchParams;
 								setSearchParams(newSearchParams);
 								mutateAlbums(
-									await getAlbums({
+									await getCurrentLibraryAlbums({
 										page: 1,
 										params: newSearchParams,
+										libraryId: Number.parseInt(params.libraryId),
 									}),
 								);
 								setCurrentSelect(newVal);
@@ -102,14 +108,20 @@ const Albums: Component = () => {
 			</Show>
 			<div class="flex flex-wrap gap-x-2 gap-y-4">
 				<Show
-					when={albumsStore.albums.length && lastPageNumber !== undefined}
+					when={
+						libraryStore.currentLibrarylbums && lastPageNumber !== undefined
+					}
 					fallback={
 						<Loading margin="ml-[calc(50%-1rem)] mt-[calc(50%-1rem)]" />
 					}
 				>
-					<For each={albumsStore.albums}>
+					<For each={libraryStore.currentLibrarylbums}>
 						{(album) => (
-							<AlbumThumbnail albumId={album.id} albumName={album.name} />
+							<AlbumThumbnail
+								href={`/libraries/${params.libraryId}/albums/${album.id}`}
+								albumId={album.id}
+								albumName={album.name}
+							/>
 						)}
 					</For>
 				</Show>
@@ -127,7 +139,11 @@ const Albums: Component = () => {
 					}}
 					getNewPage={async (newPage) =>
 						mutateAlbums(
-							await getAlbums({ page: newPage, params: searchParams }),
+							await getCurrentLibraryAlbums({
+								page: newPage,
+								params: searchParams,
+								libraryId: Number.parseInt(params.libraryId),
+							}),
 						)
 					}
 				/>

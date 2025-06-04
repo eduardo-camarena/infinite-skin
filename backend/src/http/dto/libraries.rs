@@ -9,7 +9,7 @@ pub struct CreateLibraryDTO {
 
 #[derive(Deserialize, Debug)]
 pub struct ScanMediaFolderDTO {
-    pub libraries: Option<Vec<i32>>,
+    pub library_ids: Option<Vec<i32>>,
 }
 
 #[derive(Deserialize, Debug)]

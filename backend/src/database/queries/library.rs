@@ -8,11 +8,13 @@ pub async fn create(
     name: String,
     location: String,
     is_private: i8,
+    user_id: i32,
 ) -> Result<InsertResult<entity::library::ActiveModel>, DbErr> {
     Library::insert(entity::library::ActiveModel {
         name: Set(name),
         location: Set(location),
         is_private: Set(is_private),
+        user_id: Set(user_id),
         ..Default::default()
     })
     .exec(db)
@@ -28,15 +30,24 @@ pub async fn find_by_id(db: &DatabaseConnection, id: i32) -> Result<Option<Parti
 
 pub struct FindOptions {
     ids: Option<Vec<i32>>,
+    user_ids: Option<Vec<i32>>,
 }
 
 impl FindOptions {
     pub fn new() -> FindOptions {
-        FindOptions { ids: None }
+        FindOptions {
+            ids: None,
+            user_ids: None,
+        }
     }
 
     pub fn add_ids(mut self, ids: Vec<i32>) -> Self {
         self.ids = Some(ids);
+        self
+    }
+
+    pub fn add_user_id(mut self, ids: Vec<i32>) -> Self {
+        self.user_ids = Some(ids);
         self
     }
 }
@@ -50,7 +61,11 @@ pub async fn find(
     query = match find_options {
         Some(opts) => {
             if opts.ids.is_some() {
-                query = query.filter(entity::library::Column::Id.is_in(opts.ids.unwrap()))
+                query = query.filter(entity::library::Column::Id.is_in(opts.ids.unwrap()));
+            }
+
+            if opts.user_ids.is_some() {
+                query = query.filter(entity::library::Column::Id.is_in(opts.user_ids.unwrap()));
             }
 
             query

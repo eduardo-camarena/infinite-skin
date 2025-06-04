@@ -14,10 +14,9 @@ pub struct Model {
     pub pages: i16,
     pub is_private: i8,
     pub chapter_number: i16,
+    pub rating: i16,
     pub series_id: Option<i32>,
     pub artist_id: Option<i32>,
-    pub user_id: i32,
-    pub rating: i16,
     pub library_id: i32,
     pub created_at: DateTimeUtc,
     pub updated_at: DateTimeUtc,
@@ -51,14 +50,6 @@ pub enum Relation {
         on_delete = "NoAction"
     )]
     Series,
-    #[sea_orm(
-        belongs_to = "super::user::Entity",
-        from = "Column::UserId",
-        to = "super::user::Column::Id",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    User,
 }
 
 impl Related<super::album_info::Entity> for Entity {
@@ -82,12 +73,6 @@ impl Related<super::library::Entity> for Entity {
 impl Related<super::series::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Series.def()
-    }
-}
-
-impl Related<super::user::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::User.def()
     }
 }
 

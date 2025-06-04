@@ -23,7 +23,8 @@ import {
 	GetImagePayload,
 } from '../../stores/currentAlbum';
 
-type AlbumViewerParams = {
+export type AlbumViewerParams = {
+	libraryId: string;
 	albumId: string;
 	imageId: string;
 };
@@ -46,7 +47,9 @@ const AlbumViewer: Component = () => {
 
 	const updateImage = async (payload: GetImagePayload): Promise<void> => {
 		mutate(undefined);
-		navigate(`/a/${payload.albumId}/p/${payload.imageId}`);
+		navigate(
+			`/libraries/${params.libraryId}/${payload.albumId}/p/${payload.imageId}`,
+		);
 		mutate(
 			await getImage({
 				albumId: payload.albumId,

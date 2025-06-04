@@ -14,20 +14,36 @@ use super::dto::libraries::GetPossibleFoldersDTO;
 
 pub fn controller() -> actix_web::Scope {
     return web::scope("/libraries")
-        .service(create)
+        .service(get_libraries)
+        .service(create_library)
         .service(get_possible_folders)
         .service(scan_media_folder);
 }
 
-#[post("")]
-async fn create(req: HttpRequest, ctx: Context, body: Json<CreateLibraryDTO>) -> impl Responder {
+#[get("")]
+async fn get_libraries(req: HttpRequest, ctx: Context) -> impl Responder {
     let _ = get_authorization(&req);
+    let res = library_service::get_libraries(&ctx).await;
+    match res {
+        Ok(libraries) => Ok(Json(libraries)),
+        Err(err) => Err(err),
+    }
+}
+
+#[post("")]
+async fn create_library(
+    req: HttpRequest,
+    ctx: Context,
+    body: Json<CreateLibraryDTO>,
+) -> impl Responder {
+    let authorization = get_authorization(&req);
     let payload = body.into_inner();
-    let res = library_service::create(
+    let res = library_service::create_library(
         &ctx,
         payload.name,
         payload.location,
         payload.is_private as i8,
+        authorization.unwrap().sub,
     )
     .await;
 
@@ -44,7 +60,7 @@ async fn scan_media_folder(
     params: Query<ScanMediaFolderDTO>,
 ) -> impl Responder {
     let auth = get_authorization(&req).unwrap();
-    let albums = library_service::scan(&ctx, auth.sub, params.into_inner().libraries).await;
+    let albums = library_service::scan(&ctx, auth.sub, params.into_inner().library_ids).await;
 
     return match albums {
         Ok(_) => Ok(HttpResponse::Ok()),

@@ -5,7 +5,7 @@ use sea_orm::{
     InsertResult, Order, PaginatorTrait, QueryFilter, QueryOrder, QuerySelect, Statement,
 };
 
-use crate::database::models::album_model::{FullNameOnlyAlbum, PartialAlbum};
+use crate::database::models::album_model::{ObtainLocationAlbum, PartialAlbum};
 
 pub async fn create(
     db: &DatabaseConnection,
@@ -15,7 +15,7 @@ pub async fn create(
     chapter_number: i16,
     artist_id: Option<i32>,
     series_id: Option<i32>,
-    user_id: i32,
+    library_id: i32,
 ) -> Result<InsertResult<entity::album::ActiveModel>, DbErr> {
     Album::insert(entity::album::ActiveModel {
         name: Set(name),
@@ -24,7 +24,7 @@ pub async fn create(
         chapter_number: Set(chapter_number),
         artist_id: Set(artist_id),
         series_id: Set(series_id),
-        user_id: Set(user_id),
+        library_id: Set(library_id),
         ..Default::default()
     })
     .exec(db)
@@ -65,9 +65,9 @@ pub async fn find_by_id(db: &DatabaseConnection, id: i32) -> Result<Option<Parti
 pub async fn get_full_name(
     db: &DatabaseConnection,
     id: i32,
-) -> Result<Option<FullNameOnlyAlbum>, DbErr> {
+) -> Result<Option<ObtainLocationAlbum>, DbErr> {
     Album::find_by_id(id)
-        .into_partial_model::<FullNameOnlyAlbum>()
+        .into_partial_model::<ObtainLocationAlbum>()
         .one(db)
         .await
 }
@@ -87,6 +87,7 @@ pub async fn get_with_filter(
     page_index: i32,
     artist_id: Option<i32>,
     series_id: Option<i32>,
+    library_id: Option<i32>,
     order_by_type: Option<String>,
     order_by_column: Option<String>,
 ) -> Result<Vec<PartialAlbum>, DbErr> {
@@ -98,6 +99,10 @@ pub async fn get_with_filter(
 
     if series_id.is_some() {
         query = query.filter(entity::album::Column::SeriesId.eq(series_id.unwrap()));
+    }
+
+    if library_id.is_some() {
+        query = query.filter(entity::album::Column::LibraryId.eq(library_id.unwrap()));
     }
 
     query

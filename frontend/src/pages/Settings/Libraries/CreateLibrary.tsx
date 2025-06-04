@@ -1,17 +1,17 @@
 import { Component, createResource, Match, Show, Switch } from 'solid-js';
 
-import Loading from '../../components/Loading';
-import Button from '../../InputComponents/Button';
-import { authStore } from '../../stores/authStore';
-import { scan, settingsStore } from '../../stores/settingsStore';
-import TextInput from '../../InputComponents/TextInput';
-import CheckboxInput from '../../InputComponents/CheckboxInput';
+import Loading from '../../../components/Loading';
+import Button from '../../../InputComponents/Button';
+import { authStore } from '../../../stores/authStore';
+import { scan, settingsStore } from '../../../stores/settingsStore';
+import TextInput from '../../../InputComponents/TextInput';
+import CheckboxInput from '../../../InputComponents/CheckboxInput';
 import { useFormHandler } from 'solid-form-handler';
 import { zodSchema } from 'solid-form-handler/zod';
-import { onSubmitHandler } from '../../utils/forms';
+import { onSubmitHandler } from '../../../utils/forms';
 import { z } from 'zod';
-import { createLibrary, getPossibleLibraries } from '../../stores/libraries';
-import PickFolderInput from '../../InputComponents/PickFolderInput';
+import { createLibrary, getPossibleLibraries } from '../../../stores/libraries';
+import PickFolderInput from '../../../InputComponents/PickFolderInput';
 
 const newLibrarySchema = z.object({
 	name: z.string().nonempty(),
@@ -19,7 +19,7 @@ const newLibrarySchema = z.object({
 	isPrivate: z.string().optional(),
 });
 
-const CreateLibrary: Component = () => {
+const Libraries: Component = () => {
 	const formHandler = useFormHandler(zodSchema(newLibrarySchema));
 	formHandler.setFieldValue('location', '/media_folder/');
 
@@ -92,4 +92,4 @@ const CreateLibrary: Component = () => {
 	);
 };
 
-export default CreateLibrary;
+export default Libraries;

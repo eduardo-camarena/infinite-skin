@@ -12,7 +12,8 @@ import Albums from './pages/album/Albums';
 import AlbumViewer from './pages/album/AlbumViewer';
 import WelcomeScreen from './pages/WelcomeScreen/WelcomeScreen';
 import SettingsSidebar from './pages/Settings/SettingsSidebar';
-import Libraries from './pages/Settings/Libraries';
+import CreateLibrary from './pages/Settings/Libraries/CreateLibrary';
+import ScanLibraries from './pages/Settings/Libraries/ScanLibraries';
 const root = document.getElementById('root');
 
 if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
@@ -33,14 +34,19 @@ render(
 				<Route path="/" component={WelcomeScreen} />
 
 				<Route path="/settings" component={SettingsSidebar}>
-					<Route path="/" component={Libraries} />
+					<Route path="/libraries">
+						<Route path="/" component={CreateLibrary} />
+						<Route path="/scan" component={ScanLibraries} />
+					</Route>
 				</Route>
 
-				<Route path="/a">
-					<Route path="/" component={Albums} />
-					<Route path="/:albumId">
-						<Route path="/" component={AlbumInfo} />
-						<Route path="/p/:imageId" component={AlbumViewer} />
+				<Route path="/libraries">
+					<Route path="/:libraryId/albums">
+						<Route path="/" component={Albums} />
+						<Route path="/:albumId">
+							<Route path="/" component={AlbumInfo} />
+							<Route path="/page/:imageId" component={AlbumViewer} />
+						</Route>
 					</Route>
 				</Route>
 			</Route>

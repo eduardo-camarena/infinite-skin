@@ -6,6 +6,7 @@ import { Accessor, Component, Setter, Show } from 'solid-js';
 
 import Button from '../InputComponents/Button';
 import type { GetImagePayload } from '../stores/currentAlbum';
+import { AlbumViewerParams } from '../pages/album/AlbumViewer';
 
 export type ViewType = 'singleImage' | 'allImages';
 
@@ -31,11 +32,14 @@ const AlbumViewerControls: Component<AlbumViewerControlsProps> = ({
 	setViewType,
 	updateImage,
 }) => {
-	const params = useParams<{ albumId: string; imageId: string }>();
+	const params = useParams<AlbumViewerParams>();
 
 	return (
 		<div class="flex py-5 relative">
-			<a class="h-[34px] py-1.5 pl-4 z-10" href={`/a/${albumId}`}>
+			<a
+				class="h-[34px] py-1.5 pl-4 z-10"
+				href={`/libraries/${params.libraryId}/${albumId}`}
+			>
 				<HiSolidArrowLeft size={22} />
 			</a>
 			<div class="flex-1 flex justify-center absolute w-full py-1.5">

@@ -12,6 +12,7 @@ pub struct Model {
     #[sea_orm(column_type = "Text")]
     pub location: String,
     pub is_private: i8,
+    pub user_id: i32,
     pub created_at: DateTimeUtc,
     pub updated_at: DateTimeUtc,
 }
@@ -20,11 +21,25 @@ pub struct Model {
 pub enum Relation {
     #[sea_orm(has_many = "super::album::Entity")]
     Album,
+    #[sea_orm(
+        belongs_to = "super::user::Entity",
+        from = "Column::UserId",
+        to = "super::user::Column::Id",
+        on_update = "NoAction",
+        on_delete = "NoAction"
+    )]
+    User,
 }
 
 impl Related<super::album::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Album.def()
+    }
+}
+
+impl Related<super::user::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::User.def()
     }
 }
 

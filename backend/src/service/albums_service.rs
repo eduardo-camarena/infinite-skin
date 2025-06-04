@@ -23,6 +23,7 @@ pub async fn get_albums(
     page_index: i32,
     artist_id: Option<i32>,
     series_id: Option<i32>,
+    library_id: Option<i32>,
     order_by_type: Option<String>,
     order_by_column: Option<String>,
 ) -> Result<GetAlbumsResponse, ServerError> {
@@ -31,6 +32,7 @@ pub async fn get_albums(
         page_index,
         artist_id,
         series_id,
+        library_id,
         order_by_type,
         order_by_column,
     )
@@ -65,21 +67,22 @@ pub async fn get_file(
     album_id: i32,
     image_id: i32,
 ) -> Result<NamedFile, ServerError> {
-    let album = queries::albums::get_full_name(&ctx.db, album_id)
+    let get_full_name_album_res = queries::albums::get_full_name(&ctx.db, album_id)
         .await
         .map_err(|_| ServerError::InternalError)?;
 
-    if album.is_none() {
+    if get_full_name_album_res.is_none() {
         return Err(ServerError::ValidationError {
             field: String::from("album_id"),
         });
     }
 
-    let album_location = format!(
-        "{}/images/{}",
-        ctx.config.media_folder,
-        album.unwrap().full_name
-    );
+    let album = get_full_name_album_res.unwrap();
+    let library = queries::library::find_by_id(&ctx.db, album.library_id)
+        .await
+        .map_err(|_| ServerError::InternalError)?;
+
+    let album_location = format!("{}/{}", library.unwrap().location, album.full_name);
     let album_images = get_album_images(&album_location);
     let file = actix_files::NamedFile::open_async(&album_images[(image_id - 1) as usize]).await;
 

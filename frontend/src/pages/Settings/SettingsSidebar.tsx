@@ -5,7 +5,10 @@ const SettingsSidebar: ParentComponent = ({ children }) => {
 		<div class="h-full w-full flex flex-row items-stretch gap-2">
 			<div class="h-full border-r border-gray-500">
 				<div class="flex flex-col">
-					<a class="text-xl px-12 py-2 hover:bg-stone-800" href="/settings">
+					<a
+						class="text-xl px-12 py-2 hover:bg-stone-800"
+						href="/settings/libraries"
+					>
 						Libraries
 					</a>
 				</div>

@@ -10,11 +10,12 @@ use crate::service::errors::server_error::ServerError;
 use crate::Context;
 use serde::Serialize;
 
-pub async fn create(
+pub async fn create_library(
     ctx: &Context,
     name: String,
     location: String,
     is_private: i8,
+    user_id: i32,
 ) -> Result<PartialLibrary, ServerError> {
     let folder = read_dir(&location);
 
@@ -22,7 +23,7 @@ pub async fn create(
         return Err(ServerError::NotFound);
     }
 
-    let res = queries::library::create(&ctx.db, name, location, is_private)
+    let res = queries::library::create(&ctx.db, name, location, is_private, user_id)
         .await
         .map_err(|_| ServerError::InternalError)?;
 
@@ -42,7 +43,11 @@ pub async fn scan(
         Some(library_ids) => {
             queries::library::find(
                 &ctx.db,
-                Some(queries::library::FindOptions::new().add_ids(library_ids)),
+                Some(
+                    queries::library::FindOptions::new()
+                        .add_ids(library_ids)
+                        .add_user_id(vec![user_id]),
+                ),
             )
             .await
         }
@@ -52,12 +57,7 @@ pub async fn scan(
     match find_libraries_res {
         Ok(libraries) => {
             for library in libraries {
-                scan_library(
-                    ctx,
-                    user_id,
-                    &format!("{}/{}", &ctx.config.media_folder, library.location),
-                )
-                .await?
+                scan_library(ctx, library).await?
             }
         }
         Err(err) => println!("There was an error while obtaining libraries: {}", err),
@@ -66,12 +66,13 @@ pub async fn scan(
     return Ok(());
 }
 
-pub async fn scan_library(ctx: &Context, user_id: i32, library: &str) -> Result<(), ServerError> {
-    let folders = get_folders(library);
+pub async fn scan_library(ctx: &Context, library: PartialLibrary) -> Result<(), ServerError> {
+    let folders = get_folders(&library.location);
     let unpersisted_albums =
-        queries::albums::get_unpersisted_albums(&ctx.db, folders, format!("{}/", library)).await;
+        queries::albums::get_unpersisted_albums(&ctx.db, folders, format!("{}/", library.location))
+            .await;
 
-    let albums_to_persist = get_albums_with_metadata(unpersisted_albums, library);
+    let albums_to_persist = get_albums_with_metadata(unpersisted_albums, &library.location);
 
     let mut artists: Vec<PartialArtist> = vec![];
     let mut series: Vec<PartialSeries> = vec![];
@@ -153,7 +154,7 @@ pub async fn scan_library(ctx: &Context, user_id: i32, library: &str) -> Result<
             chapter_number,
             artist_id,
             series_id,
-            user_id,
+            library.id,
         )
         .await
         .map_err(|_| ServerError::InternalError)?;
@@ -263,9 +264,25 @@ pub fn get_possible_folders(
 ) -> Result<PossibleFoldersResponse, ServerError> {
     let folders = read_dir(path)
         .unwrap()
-        .filter(|folder| folder.as_ref().unwrap().metadata().unwrap().is_dir())
         .map(|folder| folder.unwrap().path().to_str().unwrap().to_string())
         .collect::<Vec<String>>();
 
     Ok(PossibleFoldersResponse { folders })
+}
+
+#[derive(Serialize)]
+pub struct GetLibrariesResponse {
+    libraries: Vec<PartialLibrary>,
+}
+
+pub async fn get_libraries(ctx: &Context) -> Result<GetLibrariesResponse, ServerError> {
+    let libraries = queries::library::find(&ctx.db, None).await;
+
+    if libraries.is_err() {
+        return Err(ServerError::InternalError);
+    }
+
+    Ok(GetLibrariesResponse {
+        libraries: libraries.unwrap(),
+    })
 }

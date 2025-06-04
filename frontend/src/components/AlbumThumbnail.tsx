@@ -1,13 +1,13 @@
 import { Component } from 'solid-js';
 
 import { setCurrentAlbumStore } from '../stores/currentAlbum';
-import { classNames } from '../utils/classNames';
 
 const albumsScrollHeights = [48, 72, 96, 120, 144, 168, 192, 216, 240] as const;
 type AlbumNameScrollHeight = (typeof albumsScrollHeights)[number];
 export type TailwindHeight = `group-hover:h-[${AlbumNameScrollHeight}px]`;
 
 type AlbumThumbnailProps = {
+	href: string;
 	albumId: number;
 	albumName: string;
 };
@@ -15,20 +15,22 @@ type AlbumThumbnailProps = {
 const { VITE_HOST: HOST } = import.meta.env;
 
 const AlbumThumbnail: Component<AlbumThumbnailProps> = ({
+	href,
 	albumId,
 	albumName,
 }) => {
 	return (
 		<a
-			href={`/a/${albumId}`}
-			class="w-[200px] h-[300px] m-auto relative group"
+			href={href}
+			class="w-[200px] h-[300px] m-auto relative"
 			onClick={() => setCurrentAlbumStore('images', [])}
 		>
-			<div class="flex flex-col justify-center h-full overflow-hidden">
+			<div class="w-full flex flex-col justify-center h-full overflow-hidden">
 				<img
 					src={`${HOST}/albums/${albumId}/images/1`}
 					alt={albumName}
 					loading="lazy"
+					class="w-[200px] h-[300px]"
 				/>
 			</div>
 			<div

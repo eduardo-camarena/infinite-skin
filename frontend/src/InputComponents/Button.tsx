@@ -1,6 +1,8 @@
-import type { Component, JSX } from 'solid-js';
+import { Match, Switch, type Component, type JSX } from 'solid-js';
 
 import { classNames } from '../utils/classNames';
+
+type Variant = 'blue' | 'red' | 'gray';
 
 type ButtonProps = Omit<
 	JSX.ButtonHTMLAttributes<HTMLButtonElement>,
@@ -8,12 +10,14 @@ type ButtonProps = Omit<
 > & {
 	text: string | JSX.Element;
 	padding?: string;
-	variant?: 'blue' | 'red' | 'gray';
+	isDisabled?: () => boolean;
+	variant?: Variant;
 	rounded?: 'left' | 'right' | 'top' | 'bottom' | 'full' | 'md' | 'none';
 };
 
 const Button: Component<ButtonProps> = ({
 	text,
+	isDisabled,
 	variant = 'blue',
 	rounded = 'md',
 	padding = 'px-6 py-2',
@@ -38,7 +42,7 @@ const Button: Component<ButtonProps> = ({
 		}
 	})();
 
-	const variantClass = (() => {
+	const getVariantClass = (variant: Variant) => {
 		switch (variant) {
 			case 'blue':
 				return 'shadow-xs text-white bg-indigo-600 hover:bg-indigo-700';
@@ -47,21 +51,38 @@ const Button: Component<ButtonProps> = ({
 			case 'gray':
 				return 'shadow-xs text-gray-700 bg-gray-200';
 		}
-	})();
+	};
 
 	return (
-		<button
-			disabled={variant === 'gray'}
-			class={classNames(
-				padding,
-				roundedClass,
-				variantClass,
-				'inline-flex justify-center border border-transparent font-medium focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500',
-			)}
-			{...extraProps}
-		>
-			{text}
-		</button>
+		<Switch>
+			<Match when={typeof isDisabled !== 'undefined' && isDisabled()}>
+				<button
+					disabled={true}
+					class={classNames(
+						padding,
+						roundedClass,
+						getVariantClass('gray'),
+						'inline-flex justify-center border border-transparent font-medium focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500',
+					)}
+					{...extraProps}
+				>
+					{text}
+				</button>
+			</Match>
+			<Match when={typeof isDisabled === 'undefined' || isDisabled() === false}>
+				<button
+					class={classNames(
+						padding,
+						roundedClass,
+						getVariantClass(variant),
+						'inline-flex justify-center border border-transparent font-medium focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500',
+					)}
+					{...extraProps}
+				>
+					{text}
+				</button>
+			</Match>
+		</Switch>
 	);
 };
 

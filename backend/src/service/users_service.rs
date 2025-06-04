@@ -12,9 +12,9 @@ use crate::service::errors::server_error::ServerError;
 
 pub async fn new_user(
     ctx: &Context,
-    username: &String,
-    password: &String,
-    role: &String,
+    username: &str,
+    password: &str,
+    role: &str,
 ) -> Result<LoginResponse, ServerError> {
     let config = &ctx.config;
     let hashed_password = hash_password(password);
@@ -136,7 +136,7 @@ pub async fn get_user(auth: &Authorization, ctx: &Context) -> Result<MainPageUse
 
 // the cost was not really tested, so this is probably not good for a real app,
 // but also this is only going to be run by on local networks.
-pub fn hash_password(password: &String) -> Result<String, ServerError> {
+pub fn hash_password(password: &str) -> Result<String, ServerError> {
     return bcrypt::hash(password, 8).map_err(|_error| ServerError::InternalError);
 }
 

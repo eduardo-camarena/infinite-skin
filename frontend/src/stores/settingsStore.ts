@@ -10,10 +10,12 @@ export const [settingsStore, setSettingsStore] = createStore<OptionsStore>({
 	loading: 'idle',
 });
 
-export const scan = async (): Promise<void> => {
+export const scan = async (
+	libraryIds?: [number, ...number[]],
+): Promise<void> => {
 	setSettingsStore(() => ({ loading: 'pending' }));
 
-	await httpClient.post('/scan');
+	await httpClient.post('/libraries/scan', { params: { libraryIds } });
 
 	setSettingsStore(() => ({ loading: 'idle' }));
 };

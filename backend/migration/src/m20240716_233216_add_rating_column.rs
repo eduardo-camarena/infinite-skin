@@ -9,7 +9,7 @@ impl MigrationTrait for Migration {
         let db = manager.get_connection();
 
         db.execute_unprepared(
-            "ALTER TABLE album ADD rating SMALLINT NOT NULL DEFAULT 0 AFTER user_id",
+            "ALTER TABLE album ADD rating SMALLINT NOT NULL DEFAULT 0 AFTER chapter_number",
         )
         .await?;
 

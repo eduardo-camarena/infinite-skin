@@ -57,7 +57,7 @@ const CreateUser: Component<CreateUserProps> = ({ isAdmin = false }) => {
 			<Button
 				text="Submit"
 				variant="blue"
-				disabled={formHandler.isFormInvalid}
+				isDisabled={formHandler.isFormInvalid}
 			/>
 		</form>
 	);

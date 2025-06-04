@@ -18,7 +18,8 @@ pub struct PartialAlbum {
 
 #[derive(Deserialize, Serialize, FromQueryResult, DerivePartialModel)]
 #[sea_orm(entity = "Album")]
-pub struct FullNameOnlyAlbum {
+pub struct ObtainLocationAlbum {
+    pub library_id: i32,
     pub full_name: String,
 }
 
