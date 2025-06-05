@@ -37,18 +37,27 @@ async fn create_library(
     body: Json<CreateLibraryDTO>,
 ) -> impl Responder {
     let authorization = get_authorization(&req);
+    let user_id = authorization.unwrap().sub;
     let payload = body.into_inner();
     let res = library_service::create_library(
         &ctx,
         payload.name,
         payload.location,
         payload.is_private as i8,
-        authorization.unwrap().sub,
+        user_id,
     )
     .await;
 
     match res {
-        Ok(library) => Ok(Json(library)),
+        Ok(library) => {
+            let scan_res = library_service::scan(&ctx, user_id, Some(vec![library.id])).await;
+
+            if scan_res.is_err() {
+                println!("there was an error while scanning library");
+            }
+
+            Ok(Json(library))
+        }
         Err(err) => Err(err),
     }
 }
