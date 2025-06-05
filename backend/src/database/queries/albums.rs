@@ -55,8 +55,14 @@ pub async fn get_unpersisted_albums(
         .collect_vec()
 }
 
-pub async fn find_by_id(db: &DatabaseConnection, id: i32) -> Result<Option<PartialAlbum>, DbErr> {
-    Album::find_by_id(id)
+pub async fn find_by_id_with_relation(
+    db: &DatabaseConnection,
+    id: i32,
+    library_id: i32,
+) -> Result<Option<PartialAlbum>, DbErr> {
+    Album::find()
+        .filter(entity::album::Column::Id.eq(id))
+        .filter(entity::album::Column::LibraryId.eq(library_id))
         .into_partial_model::<PartialAlbum>()
         .one(db)
         .await
@@ -65,15 +71,26 @@ pub async fn find_by_id(db: &DatabaseConnection, id: i32) -> Result<Option<Parti
 pub async fn get_full_name(
     db: &DatabaseConnection,
     id: i32,
+    library_id: i32,
 ) -> Result<Option<ObtainLocationAlbum>, DbErr> {
-    Album::find_by_id(id)
+    Album::find()
+        .filter(entity::album::Column::Id.eq(id))
+        .filter(entity::album::Column::LibraryId.eq(library_id))
         .into_partial_model::<ObtainLocationAlbum>()
         .one(db)
         .await
 }
 
-pub async fn count(db: &DatabaseConnection, artist_id: Option<i32>) -> Result<u64, DbErr> {
+pub async fn count(
+    db: &DatabaseConnection,
+    library_id: Option<i32>,
+    artist_id: Option<i32>,
+) -> Result<u64, DbErr> {
     let mut query = Album::find();
+
+    if library_id.is_some() {
+        query = query.filter(entity::album::Column::LibraryId.eq(library_id.unwrap()));
+    }
 
     if artist_id.is_some() {
         query = query.filter(entity::album::Column::ArtistId.eq(artist_id.unwrap()));

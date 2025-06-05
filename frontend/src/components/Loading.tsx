@@ -1,15 +1,20 @@
 import type { Component } from 'solid-js';
+import { classNames } from '../utils/classNames';
 
 type LoadingProps = {
+	size?: string;
 	margin: string;
 };
 
-const Loading: Component<LoadingProps> = ({ margin }) => {
+const Loading: Component<LoadingProps> = ({ size = 'w-8 h-8', margin }) => {
 	return (
 		<div class={margin}>
 			<svg
 				role="status"
-				class="w-8 h-8 mr-2 text-gray-100 animate-spin dark:text-gray-300 fill-indigo-700"
+				class={classNames(
+					size,
+					'text-gray-100 animate-spin dark:text-gray-300 fill-indigo-700',
+				)}
 				viewBox="0 0 100 101"
 				fill="none"
 				xmlns="http://www.w3.org/2000/svg"

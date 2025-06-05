@@ -1,10 +1,21 @@
-import { Component, createResource, For, Match, Show, Switch } from 'solid-js';
+import {
+	Component,
+	createResource,
+	createSignal,
+	For,
+	Match,
+	Show,
+	Switch,
+} from 'solid-js';
 import { getLibraries, libraryStore } from '../../stores/libraries';
 import Loading from '../../components/Loading';
 import AlbumThumbnail from '../../components/AlbumThumbnail';
 import { HiSolidArrowRight } from 'solid-icons/hi';
+import Button from '../../InputComponents/Button';
+import { scan } from '../../stores/settingsStore';
 
 const WelcomeScreen: Component = () => {
+	const [loading, setLoading] = createSignal(false);
 	createResource(getLibraries);
 
 	return (
@@ -18,7 +29,7 @@ const WelcomeScreen: Component = () => {
 						>
 							<For each={libraryStore.libraries}>
 								{(library) => (
-									<>
+									<div class="pb-4">
 										<a
 											class="flex gap-2 hover:font-semibold"
 											href={`/libraries/${library.id}/albums`}
@@ -34,7 +45,24 @@ const WelcomeScreen: Component = () => {
 											}
 										>
 											<Match when={library.previewAlbums === null}>
-												<p>hello</p>
+												<p>No content found</p>
+												<Button
+													text={
+														<Show
+															when={loading()}
+															fallback={
+																<Loading size="w-6 h-6" margin="mx-auto" />
+															}
+														>
+															<p>Scan</p>
+														</Show>
+													}
+													variant="blue"
+													onClick={() => {
+														setLoading(true);
+														scan().finally(() => setLoading(false));
+													}}
+												/>
 											</Match>
 											<Match
 												when={
@@ -48,8 +76,8 @@ const WelcomeScreen: Component = () => {
 																{(album) => (
 																	<div class="shrink-0 snap-center">
 																		<AlbumThumbnail
-																			href={`/libraries/${library.id}/albums/${album.id}`}
 																			albumId={album.id}
+																			libraryId={library.id}
 																			albumName={album.name}
 																		/>
 																	</div>
@@ -60,7 +88,7 @@ const WelcomeScreen: Component = () => {
 												</div>
 											</Match>
 										</Switch>
-									</>
+									</div>
 								)}
 							</For>
 						</Show>

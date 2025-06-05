@@ -1,23 +1,27 @@
 use crate::{
-    http::dto::libraries::{CreateLibraryDTO, ScanMediaFolderDTO},
-    service::library_service,
+    http::dto::{
+        albums::AlbumFiltersDTO,
+        libraries::{CreateLibraryDTO, ScanMediaFolderDTO},
+    },
+    service::{albums_service, library_service},
     utils::token::get_authorization,
     Context,
 };
 use actix_web::{
     get, post,
-    web::{self, Json, Query},
+    web::{self, Json, Path, Query},
     HttpRequest, HttpResponse, Responder,
 };
 
-use super::dto::libraries::GetPossibleFoldersDTO;
+use super::{albums, dto::libraries::GetPossibleFoldersDTO};
 
 pub fn controller() -> actix_web::Scope {
     return web::scope("/libraries")
         .service(get_libraries)
         .service(create_library)
         .service(get_possible_folders)
-        .service(scan_media_folder);
+        .service(scan_media_folder)
+        .service(albums::controller());
 }
 
 #[get("")]

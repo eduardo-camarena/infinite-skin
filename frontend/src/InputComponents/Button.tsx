@@ -1,6 +1,14 @@
-import { Match, Switch, type Component, type JSX } from 'solid-js';
+import {
+	Accessor,
+	Match,
+	Show,
+	Switch,
+	type Component,
+	type JSX,
+} from 'solid-js';
 
 import { classNames } from '../utils/classNames';
+import Loading from '../components/Loading';
 
 type Variant = 'blue' | 'red' | 'gray';
 
@@ -10,13 +18,15 @@ type ButtonProps = Omit<
 > & {
 	text: string | JSX.Element;
 	padding?: string;
-	isDisabled?: () => boolean;
+	loading?: Accessor<boolean>;
+	isDisabled?: Accessor<boolean>;
 	variant?: Variant;
 	rounded?: 'left' | 'right' | 'top' | 'bottom' | 'full' | 'md' | 'none';
 };
 
 const Button: Component<ButtonProps> = ({
 	text,
+	loading,
 	isDisabled,
 	variant = 'blue',
 	rounded = 'md',
@@ -79,7 +89,12 @@ const Button: Component<ButtonProps> = ({
 					)}
 					{...extraProps}
 				>
-					{text}
+					<Show
+						when={typeof loading === 'undefined' || loading() === false}
+						fallback={<Loading margin="m-auto" />}
+					>
+						{text}
+					</Show>
 				</button>
 			</Match>
 		</Switch>

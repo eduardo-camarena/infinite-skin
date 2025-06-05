@@ -118,8 +118,8 @@ const Albums: Component = () => {
 					<For each={libraryStore.currentLibrarylbums}>
 						{(album) => (
 							<AlbumThumbnail
-								href={`/libraries/${params.libraryId}/albums/${album.id}`}
 								albumId={album.id}
+								libraryId={Number.parseInt(params.libraryId)}
 								albumName={album.name}
 							/>
 						)}

@@ -77,11 +77,14 @@ export interface GetAlbumsPayload {
 }
 
 const getAlbums = async (payload: GetAlbumsPayload): Promise<Array<Album>> => {
-	const { page, params } = payload;
+	const { page, libraryId, params } = payload;
 
-	const { data } = await httpClient.get(`/albums/pages/${page}`, {
-		params,
-	});
+	const { data } = await httpClient.get(
+		`libraries/${libraryId}/albums/pages/${page}`,
+		{
+			params,
+		},
+	);
 
 	return data.albums;
 };
@@ -89,5 +92,6 @@ const getAlbums = async (payload: GetAlbumsPayload): Promise<Array<Album>> => {
 export const getCurrentLibraryAlbums = async (
 	payload: GetAlbumsPayload,
 ): Promise<void> => {
+	console.log(payload);
 	setLibraryStore('currentLibrarylbums', await getAlbums(payload));
 };

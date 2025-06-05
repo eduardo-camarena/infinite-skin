@@ -55,7 +55,6 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(app_data.clone()))
             .service(http::libraries::controller())
             .service(http::users::controller())
-            .service(http::albums::controller())
             .service(http::artists::controller())
             .service(http::health_check::controller())
     })

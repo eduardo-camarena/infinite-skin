@@ -7,27 +7,27 @@ type AlbumNameScrollHeight = (typeof albumsScrollHeights)[number];
 export type TailwindHeight = `group-hover:h-[${AlbumNameScrollHeight}px]`;
 
 type AlbumThumbnailProps = {
-	href: string;
 	albumId: number;
+	libraryId: number;
 	albumName: string;
 };
 
 const { VITE_HOST: HOST } = import.meta.env;
 
 const AlbumThumbnail: Component<AlbumThumbnailProps> = ({
-	href,
 	albumId,
+	libraryId,
 	albumName,
 }) => {
 	return (
 		<a
-			href={href}
+			href={`/libraries/${libraryId}/albums/${albumId}`}
 			class="w-[200px] h-[300px] m-auto relative"
 			onClick={() => setCurrentAlbumStore('images', [])}
 		>
 			<div class="w-full flex flex-col justify-center h-full overflow-hidden">
 				<img
-					src={`${HOST}/albums/${albumId}/images/1`}
+					src={`${HOST}/libraries/${libraryId}/albums/${albumId}/images/1`}
 					alt={albumName}
 					loading="lazy"
 					class="w-[200px] h-[300px]"

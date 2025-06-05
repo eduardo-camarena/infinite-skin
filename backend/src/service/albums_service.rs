@@ -51,9 +51,10 @@ pub struct LastPageNumberResponse {
 
 pub async fn last_page_number(
     ctx: &Context,
+    library_id: i32,
     artist_id: Option<i32>,
 ) -> Result<LastPageNumberResponse, ServerError> {
-    let album_count = queries::albums::count(&ctx.db, artist_id)
+    let album_count = queries::albums::count(&ctx.db, Some(library_id), artist_id)
         .await
         .map_err(|_| ServerError::InternalError)?;
 
@@ -65,9 +66,15 @@ pub async fn last_page_number(
 pub async fn get_file(
     ctx: &Context,
     album_id: i32,
+    library_id: i32,
     image_id: i32,
 ) -> Result<NamedFile, ServerError> {
-    let get_full_name_album_res = queries::albums::get_full_name(&ctx.db, album_id)
+    println!("{} {} {}", album_id, library_id, image_id);
+    let library = queries::library::find_by_id(&ctx.db, library_id)
+        .await
+        .map_err(|_| ServerError::InternalError)?;
+
+    let get_full_name_album_res = queries::albums::get_full_name(&ctx.db, album_id, library_id)
         .await
         .map_err(|_| ServerError::InternalError)?;
 
@@ -78,9 +85,6 @@ pub async fn get_file(
     }
 
     let album = get_full_name_album_res.unwrap();
-    let library = queries::library::find_by_id(&ctx.db, album.library_id)
-        .await
-        .map_err(|_| ServerError::InternalError)?;
 
     let album_location = format!("{}/{}", library.unwrap().location, album.full_name);
     let album_images = get_album_images(&album_location);
@@ -103,8 +107,9 @@ fn get_album_images(folder: &String) -> Vec<String> {
 pub async fn get_album_info(
     ctx: &Context,
     album_id: i32,
+    library_id: i32,
 ) -> Result<AlbumWithMetadata, ServerError> {
-    let res = queries::albums::find_by_id(&ctx.db, album_id)
+    let res = queries::albums::find_by_id_with_relation(&ctx.db, album_id, library_id)
         .await
         .map_err(|_| ServerError::InternalError)?;
 

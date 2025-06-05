@@ -2,7 +2,7 @@ import { FormHandler } from 'solid-form-handler';
 
 export function onSubmitHandler<T>(
 	formHandler: FormHandler<T>,
-	onSubmit: (event: Event, formData: T) => Promise<void>,
+	onSubmit: (event: Event, formData: T) => Promise<void> | void,
 	onFlowFinish?: () => void,
 ): (event: Event) => Promise<void> {
 	return async (event: Event) => {

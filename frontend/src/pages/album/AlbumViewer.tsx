@@ -35,11 +35,15 @@ const AlbumViewer: Component = () => {
 	const [viewType, setViewType] = createSignal<ViewType>('singleImage');
 
 	if (currentAlbumStore.album === null) {
-		createResource(params.albumId, getAlbum);
+		createResource(
+			{ albumId: params.albumId, libraryId: params.libraryId },
+			getAlbum,
+		);
 	}
 	const [image, { mutate }] = createResource(
 		() => ({
 			albumId: params.albumId,
+			libraryId: params.libraryId,
 			imageId: Number.parseInt(params.imageId),
 		}),
 		getImage,
@@ -48,11 +52,12 @@ const AlbumViewer: Component = () => {
 	const updateImage = async (payload: GetImagePayload): Promise<void> => {
 		mutate(undefined);
 		navigate(
-			`/libraries/${params.libraryId}/${payload.albumId}/p/${payload.imageId}`,
+			`/libraries/${params.libraryId}/albums/${payload.albumId}/page/${payload.imageId}`,
 		);
 		mutate(
 			await getImage({
 				albumId: payload.albumId,
+				libraryId: params.libraryId,
 				imageId: payload.imageId,
 			}),
 		);
@@ -63,11 +68,13 @@ const AlbumViewer: Component = () => {
 			if (event.key === 'ArrowLeft' && Number.parseInt(params.imageId) > 1) {
 				updateImage({
 					albumId: params.albumId,
+					libraryId: params.libraryId,
 					imageId: Number.parseInt(params.imageId) - 1,
 				});
 			} else if (event.key === 'ArrowRight') {
 				updateImage({
 					albumId: params.albumId,
+					libraryId: params.libraryId,
 					imageId: Number.parseInt(params.imageId) + 1,
 				});
 			}
@@ -92,7 +99,6 @@ const AlbumViewer: Component = () => {
 			{currentAlbumStore.album && (
 				<div class="flex flex-col justify-center">
 					<AlbumViewerControls
-						albumId={params.albumId}
 						lastPage={currentAlbumStore.album.pages}
 						updateImage={updateImage}
 						viewType={viewType}
@@ -126,7 +132,6 @@ const AlbumViewer: Component = () => {
 						</Switch>
 					</div>
 					<AlbumViewerControls
-						albumId={params.albumId}
 						lastPage={currentAlbumStore.album.pages}
 						updateImage={updateImage}
 					/>

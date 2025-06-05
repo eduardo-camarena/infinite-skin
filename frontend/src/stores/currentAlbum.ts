@@ -36,13 +36,21 @@ export const [currentAlbumStore, setCurrentAlbumStore] =
 		images: [],
 	});
 
-export const getAlbum = async (albumId: string): Promise<void> => {
+interface GetAlbumPayload {
+	albumId: string;
+	libraryId: string;
+}
+
+export const getAlbum = async (payload: GetAlbumPayload): Promise<void> => {
+	const { albumId, libraryId } = payload;
 	if (
 		!currentAlbumStore.album ||
 		currentAlbumStore.album.id !== Number.parseInt(albumId)
 	) {
 		setCurrentAlbumStore('album', null);
-		const { data: album } = await httpClient.get(`/albums/${albumId}`);
+		const { data: album } = await httpClient.get(
+			`/libraries/${libraryId}/albums/${albumId}`,
+		);
 
 		setCurrentAlbumStore({ album: album, images: [] });
 	}
@@ -51,14 +59,15 @@ export const getAlbum = async (albumId: string): Promise<void> => {
 export type GetImagePayload = {
 	albumId: string;
 	imageId: number;
+	libraryId: string;
 };
 
 export const getImage = async (payload: GetImagePayload): Promise<string> => {
-	const { albumId, imageId } = payload;
+	const { albumId, libraryId, imageId } = payload;
 	const image = currentAlbumStore.images.find((image) => image.id === imageId);
 	if (image === undefined) {
 		const bytes = await fetch(
-			`${HOST}/albums/${albumId}/images/${imageId}`,
+			`${HOST}/libraries/${libraryId}/albums/${albumId}/images/${imageId}`,
 		).then(async (res) => new Blob([await res.arrayBuffer()]));
 
 		const image = URL.createObjectURL(bytes);

@@ -1,4 +1,11 @@
-import { Component, createResource, Match, Show, Switch } from 'solid-js';
+import {
+	Component,
+	createResource,
+	createSignal,
+	Match,
+	Show,
+	Switch,
+} from 'solid-js';
 
 import Loading from '../../components/Loading';
 import Button from '../../InputComponents/Button';
@@ -20,6 +27,7 @@ const newLibrarySchema = z.object({
 });
 
 const CreateLibrary: Component = () => {
+	const [loading, setLoading] = createSignal(false);
 	const formHandler = useFormHandler(zodSchema(newLibrarySchema));
 	formHandler.setFieldValue('location', '/media_folder/');
 
@@ -82,8 +90,9 @@ const CreateLibrary: Component = () => {
 							</Show>
 						}
 						variant="blue"
-						onClick={async () => {
-							await scan();
+						onClick={() => {
+							setLoading(true);
+							scan().finally(() => setLoading(false));
 						}}
 					/>
 				</Show>

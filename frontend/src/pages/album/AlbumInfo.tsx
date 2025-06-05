@@ -14,12 +14,11 @@ import {
 const AlbumInfo: Component = () => {
 	const params = useParams<{ libraryId: string; albumId: string }>();
 
-	createResource(params.albumId, getAlbum);
+	createResource(params, getAlbum);
 	const [cover] = createResource(
-		{ albumId: params.albumId, imageId: 1 },
+		{ albumId: params.albumId, libraryId: params.libraryId, imageId: 1 },
 		getImage,
 	);
-	console.log('albumInfo');
 
 	return (
 		<Show
@@ -32,7 +31,7 @@ const AlbumInfo: Component = () => {
 						<div class="px-8 pb-4 md:pb-0 md:w-[45%] lg:w-[40%] lg:relative">
 							<a
 								class="flex flex-col justify-center h-full"
-								href={`/libraries/${params.libraryId}/${params.albumId}/p/1`}
+								href={`/libraries/${params.libraryId}/albums/${params.albumId}/page/1`}
 							>
 								<img src={cover()} alt="cover" />
 							</a>

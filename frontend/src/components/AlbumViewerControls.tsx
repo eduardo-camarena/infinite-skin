@@ -11,7 +11,6 @@ import { AlbumViewerParams } from '../pages/album/AlbumViewer';
 export type ViewType = 'singleImage' | 'allImages';
 
 type AlbumViewerControlsProps = {
-	albumId: string;
 	lastPage: number;
 	updateImage: (payload: GetImagePayload) => Promise<void>;
 } & (
@@ -26,7 +25,6 @@ type AlbumViewerControlsProps = {
 );
 
 const AlbumViewerControls: Component<AlbumViewerControlsProps> = ({
-	albumId,
 	viewType,
 	lastPage,
 	setViewType,
@@ -38,7 +36,7 @@ const AlbumViewerControls: Component<AlbumViewerControlsProps> = ({
 		<div class="flex py-5 relative">
 			<a
 				class="h-[34px] py-1.5 pl-4 z-10"
-				href={`/libraries/${params.libraryId}/${albumId}`}
+				href={`/libraries/${params.libraryId}/albums/${params.albumId}`}
 			>
 				<HiSolidArrowLeft size={22} />
 			</a>
@@ -48,7 +46,11 @@ const AlbumViewerControls: Component<AlbumViewerControlsProps> = ({
 					<FaSolidAnglesLeft
 						size={22}
 						onClick={() => {
-							updateImage({ albumId, imageId: 1 });
+							updateImage({
+								albumId: params.albumId,
+								libraryId: params.libraryId,
+								imageId: 1,
+							});
 						}}
 					/>{' '}
 				</span>
@@ -57,7 +59,11 @@ const AlbumViewerControls: Component<AlbumViewerControlsProps> = ({
 						onClick={() => {
 							const imageId = Number.parseInt(params.imageId);
 							if (imageId > 1) {
-								updateImage({ albumId, imageId: imageId - 1 });
+								updateImage({
+									albumId: params.albumId,
+									libraryId: params.libraryId,
+									imageId: imageId - 1,
+								});
 							}
 						}}
 					>
@@ -74,7 +80,11 @@ const AlbumViewerControls: Component<AlbumViewerControlsProps> = ({
 						onClick={() => {
 							const imageId = Number.parseInt(params.imageId);
 							if (imageId < lastPage) {
-								updateImage({ albumId, imageId: imageId + 1 });
+								updateImage({
+									albumId: params.albumId,
+									libraryId: params.libraryId,
+									imageId: imageId + 1,
+								});
 							}
 						}}
 					/>{' '}
@@ -84,7 +94,11 @@ const AlbumViewerControls: Component<AlbumViewerControlsProps> = ({
 					<FaSolidAnglesRight
 						size={22}
 						onClick={() => {
-							updateImage({ albumId, imageId: lastPage });
+							updateImage({
+								albumId: params.albumId,
+								libraryId: params.libraryId,
+								imageId: lastPage,
+							});
 						}}
 					/>{' '}
 				</span>

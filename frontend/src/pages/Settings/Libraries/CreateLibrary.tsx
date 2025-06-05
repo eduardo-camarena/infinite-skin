@@ -1,4 +1,11 @@
-import { Component, createResource, Match, Show, Switch } from 'solid-js';
+import {
+	Component,
+	createResource,
+	createSignal,
+	Match,
+	Show,
+	Switch,
+} from 'solid-js';
 
 import Loading from '../../../components/Loading';
 import Button from '../../../InputComponents/Button';
@@ -20,21 +27,20 @@ const newLibrarySchema = z.object({
 });
 
 const Libraries: Component = () => {
+	const [loading, setLoading] = createSignal(false);
 	const formHandler = useFormHandler(zodSchema(newLibrarySchema));
 	formHandler.setFieldValue('location', '/media_folder/');
 
 	const [possibleLibraries, { mutate: mutatePossibleLibraries }] =
 		createResource(formHandler.formData().location, getPossibleLibraries);
 
-	const onSubmit = onSubmitHandler(
-		formHandler,
-		async (_, formValues): Promise<void> => {
-			await createLibrary({
-				...formValues,
-				isPrivate: formValues.isPrivate === 'on',
-			});
-		},
-	);
+	const onSubmit = onSubmitHandler(formHandler, (_, formValues): void => {
+		setLoading(true);
+		createLibrary({
+			...formValues,
+			isPrivate: formValues.isPrivate === 'on',
+		}).finally(() => setLoading(false));
+	});
 
 	return (
 		<div class="pt-8 flex flex-col content-center items-center h-full">
@@ -67,25 +73,10 @@ const Libraries: Component = () => {
 								type="submit"
 								variant="gray"
 								isDisabled={formHandler.isFormInvalid}
+								loading={loading}
 							/>
 						</form>
 					</div>
-					<Button
-						text={
-							<Show
-								when={settingsStore.loading === 'idle'}
-								fallback={
-									<Loading margin="ml-[calc(50%-1rem)] mt-[calc(50%-1rem)]" />
-								}
-							>
-								<p>Scan</p>
-							</Show>
-						}
-						variant="blue"
-						onClick={async () => {
-							await scan();
-						}}
-					/>
 				</Show>
 			</Show>
 		</div>
