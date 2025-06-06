@@ -32,11 +32,14 @@ const Albums: Component = () => {
 	}
 
 	const [lastPageNumber] = createResource<number>(async () => {
-		const { data } = await httpClient.get('/albums/last-page-number', {
-			params: searchParams.artistId
-				? { artistId: searchParams.artistId }
-				: undefined,
-		});
+		const { data } = await httpClient.get(
+			`/libraries/${params.libraryId}/albums/last-page-number`,
+			{
+				params: searchParams.artistId
+					? { artistId: searchParams.artistId }
+					: undefined,
+			},
+		);
 
 		return data.lastPageNumber;
 	});
