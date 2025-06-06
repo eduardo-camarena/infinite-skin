@@ -71,7 +71,10 @@ const AlbumViewer: Component = () => {
 					libraryId: params.libraryId,
 					imageId: Number.parseInt(params.imageId) - 1,
 				});
-			} else if (event.key === 'ArrowRight') {
+			} else if (
+				event.key === 'ArrowRight' &&
+				Number.parseInt(params.imageId) < (currentAlbumStore.album?.pages ?? 0)
+			) {
 				updateImage({
 					albumId: params.albumId,
 					libraryId: params.libraryId,
